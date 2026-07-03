@@ -34,9 +34,6 @@ export function RiskScoreGauge({
   // Arc spans 240 degrees (from 150° to 30° going clockwise)
   const startAngle = 150;
   const totalAngle = 240;
-  const circumference = 2 * Math.PI * r;
-  const arcLength = (totalAngle / 360) * circumference;
-  const scoreOffset = ((100 - score) / 100) * arcLength;
 
   function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
     const rad = ((angleDeg - 90) * Math.PI) / 180;

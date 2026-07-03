@@ -197,6 +197,7 @@ function generateBenchmarkReport(companies: typeof mockCompanies) {
 function generateTrendAnalysisReport(companies: typeof mockCompanies, _dateRange?: { start: string; end: string }) {
   // Mock trend data - in real app, this would analyze historical data
   const trends = {
+    dateRange: _dateRange ?? null,
     riskScoreTrend: {
       period: "Last 12 months",
       averageChange: -2.3, // points

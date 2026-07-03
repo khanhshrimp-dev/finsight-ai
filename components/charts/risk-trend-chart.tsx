@@ -17,6 +17,7 @@ interface RiskTrendDataPoint {
 
 interface RiskTrendChartProps {
   data: RiskTrendDataPoint[];
+  height?: number;
 }
 
 function CustomTooltip({
@@ -41,9 +42,9 @@ function CustomTooltip({
   );
 }
 
-export function RiskTrendChart({ data }: RiskTrendChartProps) {
+export function RiskTrendChart({ data, height = 220 }: RiskTrendChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={height} minWidth={0}>
       <LineChart data={data} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
         <defs>
           <linearGradient id="riskGradient" x1="0" y1="0" x2="1" y2="0">

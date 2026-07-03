@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
 import { mockCompanies } from "@/lib/mock";
+import { analyzeRisk } from "@/lib/risk";
+import { generateMockRiskAnalystResponse, profileFromCompany } from "@/lib/ai/risk-analyst";
 import type { CopilotMessage, CopilotResponse, Company } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +56,37 @@ const riskDotColor: Record<string, string> = {
   high: "bg-orange-500",
   critical: "bg-red-500",
 };
+
+function getAnalystResponse(company: Company, prompt: string): CopilotResponse {
+  const latestPeriod = company.periods[company.periods.length - 1];
+  const previousPeriod =
+    company.periods.length > 1 ? company.periods[company.periods.length - 2] : null;
+  const risk = analyzeRisk(latestPeriod.metrics, {
+    currentPeriod: latestPeriod,
+    previousPeriod,
+  });
+  const analyst = generateMockRiskAnalystResponse({
+    companyProfile: profileFromCompany(company),
+    financialMetrics: latestPeriod.metrics,
+    riskScore: risk.riskScore,
+    riskLabel: risk.riskLabel,
+    riskDrivers: risk.drivers,
+    fraudSignals: risk.fraudSignals,
+    benchmarkData: company.benchmarkData,
+    scenarioSummary: prompt.toLowerCase().includes("scenario")
+      ? "Copilot prompt requested scenario-oriented interpretation."
+      : undefined,
+  });
+
+  return {
+    summary: analyst.executiveSummary,
+    key_risks: analyst.keyRisks,
+    key_strengths: analyst.positiveSignals,
+    recommended_actions: analyst.recommendedActions,
+    confidence: company.confidenceScore,
+    disclaimer: analyst.professionalDisclaimer,
+  };
+}
 
 // ─── Mock response engine ─────────────────────────────────────────────────────
 
@@ -128,40 +159,27 @@ function getMockResponse(prompt: string, companyId: string | null): CopilotRespo
 
   // ── Distress / risk ──────────────────────────────────────────────────────
   if (lower.includes("distress") || lower.includes("risk")) {
+    if (company) return getAnalystResponse(company, prompt);
+
     return {
-      summary: company
-        ? `${companyName} carries a FinSight risk score of ${company.riskScore}/100 (${company.riskTier.toUpperCase()} tier). ${company.aiSummary}`
-        : "Financial distress analysis evaluates a company's probability of default, liquidity runway, and covenant compliance trajectory using a multi-factor scoring model incorporating Altman Z-Score, Ohlson O-Score, and proprietary cash flow stress tests.",
-      key_risks: company
-        ? company.riskDrivers
-            .filter((d) => d.direction === "negative")
-            .slice(0, 4)
-            .map((d) => `${d.factor}: ${d.description}`)
-        : [
-            "Altman Z-Score below 1.81 indicates distress zone — default probability elevated over 24 months",
-            "Current ratio below 1.0x suggests inability to meet near-term obligations from current assets",
-            "Interest coverage below 1.5x limits debt service capacity and covenant headroom",
-            "Negative free cash flow constrains operational flexibility and debt reduction capacity",
-          ],
-      key_strengths: company
-        ? company.riskDrivers
-            .filter((d) => d.direction === "positive")
-            .slice(0, 3)
-            .map((d) => `${d.factor}: ${d.description}`)
-        : [
-            "Asset-backed collateral may support secured lending even in distress scenarios",
-            "Brand equity and customer relationships retain residual liquidation value",
-            "Management has not yet exhausted refinancing options in current rate environment",
-          ],
-      recommended_actions: company
-        ? company.recommendations.slice(0, 4).map((r) => `[${r.priority.toUpperCase()}] ${r.title}: ${r.description}`)
-        : [
-            "Model three scenarios: base, stress, and recovery — quantify cash burn in each",
-            "Engage restructuring advisor to explore pre-negotiated covenant amendment",
-            "Review all material debt agreements for cross-default and acceleration provisions",
-            "Establish weekly cash flow monitoring cadence until risk score improves by 10+ points",
-          ],
-      confidence: company ? company.confidenceScore : 74,
+      summary:
+        "Financial distress analysis evaluates liquidity runway, debt service capacity, profitability, cash conversion, and accounting red flags. Select a company to generate an analyst summary from the deterministic model output.",
+      key_risks: [
+        "Current ratio below 1.0x suggests inability to meet near-term obligations from current assets",
+        "Interest coverage below 1.5x limits debt service capacity and covenant headroom",
+        "Negative free cash flow constrains operational flexibility and debt reduction capacity",
+      ],
+      key_strengths: [
+        "Asset-backed collateral may support secured lending even in distress scenarios",
+        "Trend analysis can identify improving risk before the absolute score fully normalizes",
+        "Scenario testing helps separate temporary stress from structural impairment",
+      ],
+      recommended_actions: [
+        "Select a company context for model-backed risk drivers.",
+        "Model base, stress, and recovery scenarios to quantify score sensitivity.",
+        "Review debt agreements for covenant, maturity, and cross-default risk.",
+      ],
+      confidence: 74,
       disclaimer:
         "Risk scores are model-derived estimates based on available financial data. They do not constitute credit ratings or investment advice. Consult qualified financial professionals before making credit or investment decisions.",
     };
@@ -224,42 +242,28 @@ function getMockResponse(prompt: string, companyId: string | null): CopilotRespo
     lower.includes("summary") ||
     lower.includes("overview")
   ) {
+    if (company) return getAnalystResponse(company, prompt);
+
     return {
-      summary: company
-        ? `${companyName} (${company.ticker}) is classified as ${company.riskTier.toUpperCase()} with a FinSight risk score of ${company.riskScore}/100. ${company.aiSummary}`
-        : "A comprehensive financial health summary evaluates liquidity, solvency, profitability, operational efficiency, and growth trajectory. FinSight synthesizes these five dimensions into a unified risk score with confidence-weighted sub-scores.",
-      key_risks: company
-        ? company.riskDrivers
-            .filter((d) => d.direction === "negative")
-            .slice(0, 4)
-            .map((d) => `${d.factor} (Impact: ${(d.impact * 100).toFixed(0)}%): ${d.description}`)
-        : [
-            "Liquidity: current ratio trending below 1.2x — watch for working capital compression",
-            "Leverage: debt-to-equity above sector median limits financial flexibility",
-            "Profitability: net margin compression driven by input cost inflation",
-            "Growth: revenue growth decelerating — may signal market saturation or competitive pressure",
-          ],
-      key_strengths: company
-        ? company.riskDrivers
-            .filter((d) => d.direction === "positive")
-            .slice(0, 3)
-            .map((d) => `${d.factor}: ${d.description}`)
-        : [
-            "Strong operating cash flow generation relative to reported net income",
-            "Diversified revenue mix reduces single-customer concentration risk",
-            "Conservative debt maturity profile with no near-term refinancing cliff",
-          ],
-      recommended_actions: company
-        ? company.recommendations
-            .slice(0, 4)
-            .map((r) => `${r.title}: ${r.description}`)
-        : [
-            "Prioritize working capital optimization — target 10-15% reduction in cash conversion cycle",
-            "Evaluate refinancing opportunity for near-term debt maturities at current spreads",
-            "Develop cost reduction roadmap targeting 200-300bps margin improvement over 18 months",
-            "Establish KPI dashboard tracking weekly liquidity, monthly margin, and quarterly leverage",
-          ],
-      confidence: company ? company.confidenceScore : 78,
+      summary:
+        "A comprehensive financial health summary evaluates liquidity, solvency, profitability, cash flow, and growth trajectory. Select a company to generate a model-backed analyst memo.",
+      key_risks: [
+        "Liquidity: current ratio below monitoring thresholds can signal working capital compression",
+        "Leverage: high debt-to-equity limits financial flexibility",
+        "Profitability: net margin compression can weaken debt service capacity",
+        "Growth: revenue growth without cash conversion can indicate earnings quality risk",
+      ],
+      key_strengths: [
+        "Strong operating cash flow generation relative to reported net income",
+        "Conservative leverage and healthy interest coverage",
+        "Stable margins and working capital discipline",
+      ],
+      recommended_actions: [
+        "Select a company context for tailored analysis.",
+        "Review the latest period metrics and generated accounting red flags.",
+        "Use the Scenario Simulator to test management actions.",
+      ],
+      confidence: 78,
       disclaimer:
         "Financial health assessments are based on reported data and model-derived estimates. They do not constitute investment advice or credit ratings. All summaries should be reviewed by qualified professionals.",
     };
@@ -306,40 +310,28 @@ function getMockResponse(prompt: string, companyId: string | null): CopilotRespo
   }
 
   // ── Default: general financial analysis ──────────────────────────────────
+  if (company) return getAnalystResponse(company, prompt);
+
   return {
-    summary: company
-      ? `Analyzing ${companyName} (${company.ticker}, ${company.sector}): The company currently holds a FinSight risk score of ${company.riskScore}/100 with a ${company.riskTier} classification and ${company.fraudRisk} fraud risk. ${company.aiSummary.slice(0, 200)}...`
-      : "FinSight Copilot provides AI-assisted financial analysis across risk assessment, fraud detection, peer benchmarking, and distress prediction. To get company-specific insights, select a company from the context panel and ask about financial health, fraud signals, benchmark comparisons, or specific metrics.",
-    key_risks: company
-      ? company.riskDrivers
-          .filter((d) => d.direction === "negative")
-          .slice(0, 4)
-          .map((d) => `${d.factor}: ${d.description}`)
-      : [
-          "Conduct thorough liquidity stress test before extending credit or making investment",
-          "Review leverage trajectory — debt service coverage trending is often more predictive than point-in-time",
-          "Assess management track record on guidance accuracy — credibility matters in high-uncertainty situations",
-          "Verify auditor independence and examine any going-concern qualifications or emphasis-of-matter paragraphs",
-        ],
-    key_strengths: company
-      ? company.riskDrivers
-          .filter((d) => d.direction === "positive")
-          .slice(0, 3)
-          .map((d) => `${d.factor}: ${d.description}`)
-      : [
-          "Structured financial analysis reduces emotional bias in high-stakes decisions",
-          "Quantitative screening identifies outliers that qualitative review may miss",
-          "Consistent methodology enables apples-to-apples comparison across portfolio companies",
-        ],
-    recommended_actions: company
-      ? company.recommendations.slice(0, 4).map((r) => `${r.title}: ${r.description}`)
-      : [
-          "Select a company from the context panel for tailored analysis",
-          "Ask about fraud signals, distress indicators, or peer benchmarks for specific insights",
-          "Use suggested prompts to explore standard financial analysis frameworks",
-          "Generate a full report from the Reports page for a downloadable structured analysis",
-        ],
-    confidence: company ? company.confidenceScore : 70,
+    summary:
+      "FinSight Copilot provides AI-assisted financial analysis across risk assessment, fraud screening, peer benchmarking, and scenario interpretation. Select a company from the context panel for model-backed insights.",
+    key_risks: [
+      "Conduct liquidity stress testing before extending credit or making an investment decision",
+      "Review leverage trajectory and debt service coverage trends",
+      "Verify auditor independence and examine any going-concern disclosures",
+    ],
+    key_strengths: [
+      "Structured financial analysis reduces ad hoc judgment in high-stakes decisions",
+      "Quantitative screening identifies outliers that qualitative review may miss",
+      "Consistent methodology enables comparison across portfolio companies",
+    ],
+    recommended_actions: [
+      "Select a company from the context panel for tailored analysis",
+      "Ask about fraud signals, distress indicators, or peer benchmarks for specific insights",
+      "Use the Scenario Simulator to test key management actions",
+      "Generate a report once the report export layer is connected",
+    ],
+    confidence: 70,
     disclaimer:
       "This analysis is generated by an AI model trained on financial data patterns. It does not constitute investment advice, a credit rating, or a professional financial opinion. Always verify findings with qualified professionals.",
   };

@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { RiskBadge } from "@/components/ui/risk-badge";
 import { allAlerts, mockCompanies } from "@/lib/mock";
 import { computeMockRiskScore, getRiskTierFromScore, getRiskLabel } from "@/lib/utils/risk";
@@ -71,13 +69,6 @@ function getRiskScoreBarColor(score: number): string {
   if (score <= 50) return "bg-amber-500";
   if (score <= 75) return "bg-orange-500";
   return "bg-red-500";
-}
-
-function getTierRingColor(score: number): string {
-  if (score <= 25) return "ring-emerald-400";
-  if (score <= 50) return "ring-amber-400";
-  if (score <= 75) return "ring-orange-400";
-  return "ring-red-500";
 }
 
 // ─── Initial watchlist ────────────────────────────────────────────────────────
@@ -198,10 +189,6 @@ export default function AlertsPage() {
     });
   }, [alerts, severityFilter, typeFilter, readFilter]);
 
-  const markAsRead = useCallback((id: string) => {
-    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, read: true } : a)));
-  }, []);
-
   const toggleRead = useCallback((id: string) => {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, read: !a.read } : a)));
   }, []);
@@ -214,10 +201,6 @@ export default function AlertsPage() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(INITIAL_WATCHLIST);
   const [watchlistSelectId, setWatchlistSelectId] = useState<string>("");
 
-  const watchedCompanies = useMemo(
-    () => watchlist.map((w) => mockCompanies.find((c) => c.id === w.companyId)).filter(Boolean) as Company[],
-    [watchlist]
-  );
   const availableToAdd = useMemo(
     () => mockCompanies.filter((c) => !watchlist.some((w) => w.companyId === c.id)),
     [watchlist]
@@ -444,7 +427,6 @@ export default function AlertsPage() {
                   key={alert.id}
                   alert={alert}
                   onToggleRead={toggleRead}
-                  onMarkRead={markAsRead}
                 />
               ))}
             </div>
@@ -820,10 +802,9 @@ export default function AlertsPage() {
 interface AlertCardProps {
   alert: Alert;
   onToggleRead: (id: string) => void;
-  onMarkRead: (id: string) => void;
 }
 
-function AlertCard({ alert, onToggleRead, onMarkRead }: AlertCardProps) {
+function AlertCard({ alert, onToggleRead }: AlertCardProps) {
   const SeverityIcon = alert.severity === "critical"
     ? XCircle
     : alert.severity === "warning"

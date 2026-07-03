@@ -3,33 +3,20 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   Bot,
-  Building2,
   Calendar,
   Users,
   MapPin,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle2,
-  XCircle,
-  Minus,
-  AlertTriangle,
-  ShieldAlert,
   ChevronRight,
   BarChart3,
   Clock,
-  Target,
   Activity,
 } from "lucide-react";
 
 import { getCompanyById } from "@/lib/mock";
-import { formatMetric } from "@/lib/utils/risk";
-import { cn } from "@/lib/utils";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RiskBadge, FraudBadge } from "@/components/ui/risk-badge";
-import { MetricCard } from "@/components/ui/metric-card";
 import { RiskScoreGauge } from "@/components/ui/risk-score-gauge";
 
 import { CompanyTabs } from "./company-tabs";

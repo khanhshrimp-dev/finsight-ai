@@ -9,7 +9,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 import type { BenchmarkMetric } from "@/types";
 
@@ -64,8 +63,6 @@ function CustomTooltip({ active, payload, label, formatValue }: CustomTooltipPro
 }
 
 export function BenchmarkChart({ metrics, formatValue }: BenchmarkChartProps) {
-  const fmt = formatValue ?? defaultFormatValue;
-
   // Normalize: each metric to 0-100 scale relative to top quartile for visual comparison
   const chartData = metrics.map((m) => {
     const max = Math.max(
@@ -87,7 +84,7 @@ export function BenchmarkChart({ metrics, formatValue }: BenchmarkChartProps) {
   });
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(260, metrics.length * 52)}>
+    <ResponsiveContainer width="100%" height={Math.max(260, metrics.length * 52)} minWidth={0}>
       <BarChart
         data={chartData}
         layout="vertical"
@@ -126,13 +123,7 @@ export function BenchmarkChart({ metrics, formatValue }: BenchmarkChartProps) {
         <Tooltip
           content={
             <CustomTooltip
-              formatValue={(value, name) => {
-                // We need raw values here; use a lookup
-                const entry = chartData.find((d) =>
-                  d.name === undefined ? false : true
-                );
-                return value.toFixed(1);
-              }}
+              formatValue={formatValue ?? defaultFormatValue}
             />
           }
           cursor={{ fill: "currentColor", fillOpacity: 0.04 }}

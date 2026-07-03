@@ -66,7 +66,7 @@ export function RiskDriversChart({ drivers }: RiskDriversChartProps) {
   ];
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(240, drivers.length * 52)}>
+    <ResponsiveContainer width="100%" height={Math.max(240, drivers.length * 52)} minWidth={0}>
       <BarChart
         data={data}
         layout="vertical"

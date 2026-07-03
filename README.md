@@ -1,256 +1,135 @@
 # FinSight AI
 
-A comprehensive financial risk analysis and fraud detection platform powered by AI. FinSight provides real-time monitoring, intelligent alerts, and detailed reporting for financial institutions and risk management teams.
+FinSight AI is a Next.js + TypeScript company intelligence and investment health demo app. The product direction is hybrid: deterministic financial scoring, accounting rules, mock market intelligence, and mock news intelligence produce numerical research signals, while the AI layer explains those outputs in analyst-style language.
 
-## 🚀 Features
+The app currently uses mock company, market, and news data. It is suitable as a portfolio/demo foundation, not as a validated credit model, fraud detector, audit system, or investment decision engine.
 
-### AI-Powered Analysis
-- **Intelligent Copilot**: Natural language queries for financial analysis
-- **Risk Scoring**: Multi-factor risk assessment using Altman Z-Score, Ohlson O-Score, and proprietary models
-- **Fraud Detection**: Advanced fraud signal screening with Beneish M-Score and custom indicators
-- **Peer Benchmarking**: Industry comparison and competitive analysis
+## Current Status
 
-### Comprehensive Monitoring
-- **Real-time Alerts**: Configurable risk threshold alerts and notifications
-- **Trend Analysis**: Historical risk score trends and predictive insights
-- **Company Profiles**: Detailed financial health analysis with key metrics
-- **Sector Analysis**: Cross-industry risk distribution and benchmarking
+Working today:
 
-### Advanced Reporting
-- **Risk Summary Reports**: Portfolio-wide risk assessment
-- **Fraud Analysis Reports**: Detailed fraud signal investigation
-- **Benchmark Reports**: Peer comparison and industry analysis
-- **Trend Analysis Reports**: Historical performance and projections
+- Marketing landing page
+- Login/signup UI mockups
+- Dashboard overview
+- Company list and company detail pages
+- Financial metric cards and charts
+- Risk driver and benchmark visualizations
+- Fraud signal panels using mock data
+- AI-style copilot UI with mock responses
+- Reports UI with mock report metadata
+- Upload UI with mock processing
+- Alerts/watchlist UI backed by mock data
+- Next.js route handlers for mock analysis, copilot, reports, and upload flows
+- Deterministic financial scoring and scenario helpers under `lib/risk`
+- Rules-based accounting red flag detection under `lib/risk/fraud-signals.ts`
+- Scenario Simulator at `/dashboard/simulator`
+- Mock AI Risk Analyst abstraction under `lib/ai`
+- Mock market intelligence module, market momentum score, and `GET /api/market/[ticker]`
+- Mock news intelligence module, event scoring, and `GET /api/news/[ticker]`
+- Investment Health Score module and `POST /api/investment/analyze`
+- Typed placeholder route contracts for risk analysis, simulation, market, news, investment analysis, AI risk analysis, and report generation
 
-### Data Management
-- **File Upload**: Support for CSV, Excel, PDF, and text file uploads
-- **Data Processing**: Automated data extraction and normalization
-- **API Integration**: RESTful APIs for programmatic access
-- **Export Capabilities**: Multiple export formats (JSON, PDF, Excel)
+Still in progress:
 
-## 🛠️ Tech Stack
+- Real data ingestion
+- Real market data provider integration
+- Real news provider integration
+- Persistence/authentication
+- Real report/PDF export
+- Trained ML models
+- Test coverage for the model and API helper functions
 
-- **Frontend**: Next.js 16, React 19, TypeScript
-- **UI Components**: Radix UI, Tailwind CSS, Lucide Icons
-- **Charts**: Recharts
-- **State Management**: Zustand
-- **Styling**: Tailwind CSS with CSS Variables
-- **Icons**: Lucide React
-- **Forms**: React Hook Form with Zod validation
+See [ROADMAP.md](./ROADMAP.md), [FEATURE_TRACKER.md](./FEATURE_TRACKER.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [MODEL_STRATEGY.md](./MODEL_STRATEGY.md), [MARKET_DATA_STRATEGY.md](./MARKET_DATA_STRATEGY.md), [NEWS_INTELLIGENCE_STRATEGY.md](./NEWS_INTELLIGENCE_STRATEGY.md), and [INVESTMENT_HEALTH_SCORE.md](./INVESTMENT_HEALTH_SCORE.md).
 
-## 📁 Project Structure
+## Tech Stack
 
-```
-├── app/                          # Next.js App Router
-│   ├── api/                      # API routes
-│   │   ├── analyze/             # Company analysis endpoint
-│   │   ├── copilot/             # AI copilot chat endpoint
-│   │   ├── reports/             # Report generation endpoint
-│   │   └── upload/              # File upload endpoint
-│   ├── dashboard/               # Dashboard pages
-│   │   ├── alerts/              # Alerts management
-│   │   ├── companies/           # Company listings
-│   │   ├── copilot/             # AI copilot interface
-│   │   ├── reports/             # Reports dashboard
-│   │   ├── settings/            # User settings
-│   │   └── upload/              # File upload interface
-│   ├── layout.tsx               # Root layout
-│   └── page.tsx                 # Landing page
-├── components/                  # Reusable components
-│   ├── ui/                      # UI components (shadcn/ui)
-│   ├── charts/                  # Chart components
-│   └── dashboard/               # Dashboard-specific components
-├── hooks/                       # Custom React hooks
-├── lib/                         # Utility libraries
-│   ├── mock/                    # Mock data
-│   └── utils/                   # Helper functions
-├── types/                       # TypeScript type definitions
-└── public/                      # Static assets
-```
+- Next.js 16.2.4 App Router
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- shadcn-style local UI components
+- Base UI and Radix UI primitives
+- Lucide icons
+- Recharts
+- Mock TypeScript data in `lib/mock`
 
-## 🚀 Getting Started
+## Project Structure
 
-### Prerequisites
-
-- Node.js 18+
-- npm, yarn, pnpm, or bun
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/your-username/finsight-ai.git
-cd finsight-ai
+```text
+app/
+  api/                  Mock route handlers
+  dashboard/            Dashboard routes and layouts
+  login/                Login UI
+  signup/               Signup UI
+components/
+  charts/               Recharts wrappers
+  dashboard/            Sidebar and top nav
+  ui/                   Local UI primitives
+lib/
+  ai/                   Mock AI analyst prompts and response shaping
+  investment/           Investment Health Score logic
+  market/               Mock market data and momentum scoring
+  mock/                 Demo company, alert, and dashboard data
+  news/                 Mock news data, event classification, and scoring
+  risk/                 Deterministic financial risk and fraud rules
+  utils/                Shared helpers
+types/
+  index.ts              Core financial/company domain types
+  market.ts            Market intelligence types
+  news.ts              News intelligence types
+  investment.ts        Investment health types
 ```
 
-2. Install dependencies:
+## Run Locally
+
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
-```
-
-3. Run the development server:
-```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Build for Production
+## Build and Validate
 
 ```bash
-npm run build
-npm start
-```
-
-## 📊 API Endpoints
-
-### Copilot Chat
-```http
-POST /api/copilot
-Content-Type: application/json
-
-{
-  "message": "Analyze risk for Apple Inc",
-  "companyId": "AAPL",
-  "sessionId": "session_123"
-}
-```
-
-### Company Analysis
-```http
-POST /api/analyze
-Content-Type: application/json
-
-{
-  "companyId": "AAPL",
-  "analysisType": "comprehensive"
-}
-```
-
-### Generate Reports
-```http
-POST /api/reports
-Content-Type: application/json
-
-{
-  "type": "risk-summary",
-  "companyIds": ["AAPL", "MSFT"],
-  "format": "pdf"
-}
-```
-
-### File Upload
-```http
-POST /api/upload
-Content-Type: multipart/form-data
-
-files: [File]
-```
-
-## 🎨 UI Components
-
-The project uses shadcn/ui components with a custom design system:
-
-- **Color Scheme**: Neutral base with emerald/amber/red accents for risk levels
-- **Typography**: Geist font family
-- **Spacing**: Consistent 4px grid system
-- **Components**: Fully accessible with keyboard navigation
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env.local` file:
-
-```env
-# Database
-DATABASE_URL="postgresql://..."
-
-# API Keys
-OPENAI_API_KEY="sk-..."
-FINANCIAL_DATA_API_KEY="..."
-
-# Authentication
-NEXTAUTH_SECRET="your-secret"
-NEXTAUTH_URL="http://localhost:3000"
-```
-
-### Tailwind Configuration
-
-The design system is configured in `tailwind.config.js` with custom colors and spacing.
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm run test
-
-# Run linting
 npm run lint
-
-# Type checking
-npm run type-check
+npm run typecheck
+npm run build
 ```
 
-## 📈 Performance
+Latest validation from this feature pass:
 
-- **Lighthouse Score**: 95+ on all metrics
-- **Core Web Vitals**: All green
-- **Bundle Size**: < 200KB gzipped
-- **First Contentful Paint**: < 1.5s
+- `npm run lint`: passes.
+- `npm run typecheck`: passes.
+- `npm run build`: passes.
 
-## 🚀 Deployment
+## Mock Data Limitations
 
-### Vercel (Recommended)
+The current company, market, and news data is hand-authored demo data. Risk scores, risk drivers, fraud signals, benchmark metrics, market metrics, news sentiment, recommendations, alerts, and AI summaries are not generated from validated production data.
 
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables
-3. Deploy automatically on push
+The upload flow does not parse real financial statements yet. Report downloads are placeholders unless a future export generator is added.
 
-### Docker
+## Research Signal Limitations
 
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+FinSight AI can display Financial Health Score, Risk Score, Market Momentum Score, News Sentiment Score, and Investment Health Score. These are research and monitoring signals only. The app must not make buy, sell, hold, valuation, credit-rating, audit, or fraud conclusions.
 
-## 🤝 Contributing
+## Deterministic Scoring Plan
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+The next model step is a transparent deterministic scoring layer under `lib/risk`. It should score 0-100 using liquidity, leverage, profitability, cash flow, and growth metrics. This foundation will power the Scenario Simulator and mock APIs until real datasets and baseline ML models are ready.
 
-## 📝 License
+## Future Financial Model Plan
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+When real data is available, the first baseline models should be:
 
-## 🙏 Acknowledgments
+- Logistic regression for explainable distress classification
+- Random forest for non-linear baseline performance and feature importance
 
-- [Next.js](https://nextjs.org/) - The React framework
-- [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
-- [Recharts](https://recharts.org/) - Chart library
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+Later models may include XGBoost, LightGBM, CatBoost, and SHAP explainability after data quality and evaluation are mature.
 
-## 📞 Support
+## Future AI Analyst Plan
 
-For support, email support@finsight.ai or join our [Discord community](https://discord.gg/finsight).
+The AI layer should explain model outputs, fraud signals, benchmarks, scenarios, and recommendations. It should not calculate the numerical risk score. Provider integrations such as OpenAI or Anthropic can be added behind a clean abstraction once API keys and product requirements are defined.
 
----
+## Deployment
 
-**FinSight AI** - Transforming financial risk management with artificial intelligence.
+The app is structured for Vercel-compatible Next.js deployment. Before production deployment, add real environment variables, auth, persistence, audit remediation strategy, and CI checks.

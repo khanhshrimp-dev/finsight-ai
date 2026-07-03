@@ -14,13 +14,8 @@ import {
 } from "recharts";
 import {
   ChevronDown,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   ArrowRight,
-  BarChart3,
   AlertTriangle,
-  CheckCircle2,
   Building2,
 } from "lucide-react";
 import { mockCompanies } from "@/lib/mock";
@@ -632,7 +627,7 @@ export default function ComparePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={360}>
+              <ResponsiveContainer width="100%" height={360} minWidth={0}>
                 <RadarChart
                   data={radarData}
                   margin={{ top: 16, right: 24, bottom: 16, left: 24 }}
