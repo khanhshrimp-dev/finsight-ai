@@ -11,7 +11,7 @@ Working today:
 - Marketing landing page
 - Login/signup UI mockups
 - Dashboard overview
-- Company list and company detail pages
+- Enriched company list and company detail pages
 - Financial metric cards and charts
 - Risk driver and benchmark visualizations
 - Fraud signal panels using mock data
@@ -23,10 +23,13 @@ Working today:
 - Deterministic financial scoring and scenario helpers under `lib/risk`
 - Rules-based accounting red flag detection under `lib/risk/fraud-signals.ts`
 - Scenario Simulator at `/dashboard/simulator`
+- Standalone Market Intelligence dashboard at `/dashboard/market`
+- Standalone News Intelligence dashboard at `/dashboard/news`
 - Mock AI Risk Analyst abstraction under `lib/ai`
 - Mock market intelligence module, market momentum score, and `GET /api/market/[ticker]`
 - Mock news intelligence module, event scoring, and `GET /api/news/[ticker]`
 - Investment Health Score module and `POST /api/investment/analyze`
+- Shared enriched company intelligence helper and `GET /api/companies`, `GET /api/companies/[id]`
 - Typed placeholder route contracts for risk analysis, simulation, market, news, investment analysis, AI risk analysis, and report generation
 
 Still in progress:
@@ -52,6 +55,7 @@ See [ROADMAP.md](./ROADMAP.md), [FEATURE_TRACKER.md](./FEATURE_TRACKER.md), [ARC
 - Lucide icons
 - Recharts
 - Mock TypeScript data in `lib/mock`
+- Eight-company demo universe with sector, country, exchange, market, news, alert, and investment-health context
 
 ## Project Structure
 
@@ -70,6 +74,7 @@ lib/
   investment/           Investment Health Score logic
   market/               Mock market data and momentum scoring
   mock/                 Demo company, alert, and dashboard data
+    company-intelligence.ts  Enriched mock company/portfolio view model
   news/                 Mock news data, event classification, and scoring
   risk/                 Deterministic financial risk and fraud rules
   utils/                Shared helpers
@@ -102,6 +107,8 @@ Latest validation from this feature pass:
 - `npm run lint`: passes.
 - `npm run typecheck`: passes.
 - `npm run build`: passes.
+- HTTP route smoke: `/dashboard`, `/dashboard/companies`, `/dashboard/company/apex-technologies`, `/dashboard/market`, `/dashboard/news`, `/dashboard/compare`, `/dashboard/simulator`, `/dashboard/copilot`, `/dashboard/reports`, `/dashboard/alerts`, `/dashboard/upload`, and `/dashboard/settings` return 200 from the active local dev server.
+- Browser visual smoke was attempted, but the in-app Browser blocked local navigation with `ERR_BLOCKED_BY_CLIENT`, and the headless Chrome screenshot fallback was rejected by the environment approval system because usage limits were reached.
 
 ## Mock Data Limitations
 

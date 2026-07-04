@@ -58,7 +58,7 @@ Risks/unknowns:
 
 Goal: Finish the demo-grade dashboard UI across portfolio, company detail, alerts, reports, upload, compare, and copilot surfaces.
 
-Current status: Partial
+Current status: Mock UI sprint complete
 
 Completed items:
 - Marketing landing page exists.
@@ -67,12 +67,20 @@ Completed items:
 - Company list, company detail, compare, reports, upload, alerts, settings, and copilot routes exist.
 - Reusable UI components and chart components exist.
 - Mock company data covers multiple risk profiles.
+- `UI_COMPLETION_PLAN.md` defines the required route, API, and mock-data completion checklist.
+- `UI_UX_REDESIGN_PLAN.md` and `DESIGN_SYSTEM.md` document the current UI scan, design direction, and implementation outcome.
+- Add standalone `/dashboard/market` and `/dashboard/news` pages.
+- Add `GET /api/companies` and `GET /api/companies/[id]` for enriched mock company data.
+- Expand the mock company universe to 6-8 profiles with sector, country, exchange, ticker, financial, risk, market, news, and alert context.
+- Enrich dashboard, company list, compare, simulator, copilot, reports, alerts, upload, and settings surfaces with shared mock intelligence.
+- Add shared dashboard page shell, page header, KPI card, status badge, and error state primitives.
+- Group sidebar navigation and add mobile dashboard navigation.
+- Add responsive company cards, route loading/error states, and stronger empty states on market/news/company search surfaces.
 
 Remaining items:
-- Continue improving responsive and empty states across dashboard tools.
-- Tighten empty/loading/error states on pages that simulate async work.
-- Remove unused imports and dead references.
-- Align copy with mock-data limitations.
+- Add automated visual regression coverage when a browser runner is available.
+- Continue targeted accessibility review with a real browser once local browser access is unblocked.
+- Remove dead references as product behavior changes.
 
 Priority: High
 

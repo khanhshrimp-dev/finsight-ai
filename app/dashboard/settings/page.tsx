@@ -10,6 +10,8 @@ import {
   Key,
   Save,
   RefreshCw,
+  SlidersHorizontal,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -30,6 +34,9 @@ export default function SettingsPage() {
     email: "john.doe@finsight.com",
     company: "FinSight Analytics",
     role: "Risk Analyst",
+    workspaceName: "FinSight Demo Workspace",
+    defaultCompanyView: "company_snapshot",
+    baseCurrency: "USD",
 
     // Notifications
     emailNotifications: true,
@@ -37,6 +44,9 @@ export default function SettingsPage() {
     riskAlerts: true,
     reportNotifications: true,
     weeklyDigest: true,
+    marketAlerts: true,
+    newsAlerts: true,
+    investmentHealthAlerts: true,
 
     // Privacy & Security
     twoFactorAuth: false,
@@ -52,14 +62,23 @@ export default function SettingsPage() {
     apiKey: "fins_••••••••••••••••",
     webhookUrl: "",
     dataExportFormat: "json",
+    marketProvider: "mock",
+    newsProvider: "mock",
+    financialDataMode: "mock",
+    riskThresholdHigh: "70",
+    riskThresholdCritical: "85",
+    investmentHealthWatchlist: "60",
+    aiTone: "analyst",
+    aiDetailLevel: "balanced",
+    includeDisclaimers: true,
+    allowProviderCalls: false,
   });
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
+    // Simulate a local mock save.
     setTimeout(() => {
       setIsSaving(false);
-      // In real app, show success toast
     }, 1000);
   };
 
@@ -70,20 +89,18 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account preferences and application settings
-          </p>
-        </div>
+    <DashboardPageShell maxWidth="wide">
+      <PageHeader
+        eyebrow="Workspace Controls"
+        title="Settings"
+        description="Manage mock workspace preferences, thresholds, provider placeholders, and analyst output settings."
+        icon={SlidersHorizontal}
+        actions={
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? (
             <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              Saving Locally...
             </>
           ) : (
             <>
@@ -92,14 +109,17 @@ export default function SettingsPage() {
             </>
           )}
         </Button>
-      </div>
+        }
+      />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-7">
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="workspace">Workspace</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
           <TabsTrigger value="data">Data & API</TabsTrigger>
         </TabsList>
 
@@ -170,6 +190,66 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="workspace" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Workspace Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="workspaceName">Workspace Name</Label>
+                  <Input
+                    id="workspaceName"
+                    value={settings.workspaceName}
+                    onChange={(e) => updateSetting("workspaceName", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Default Company View</Label>
+                  <Select
+                    value={settings.defaultCompanyView}
+                    onValueChange={(value) => updateSetting("defaultCompanyView", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="company_snapshot">Company Snapshot</SelectItem>
+                      <SelectItem value="financial_health">Financial Health</SelectItem>
+                      <SelectItem value="risk_assessment">Risk Assessment</SelectItem>
+                      <SelectItem value="news_market">News & Market</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Base Currency</Label>
+                  <Select
+                    value={settings.baseCurrency}
+                    onValueChange={(value) => updateSetting("baseCurrency", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="AUD">AUD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                Workspace settings are local UI state in this mock sprint. Authentication, team roles, and persistence are not implemented.
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
@@ -216,6 +296,45 @@ export default function SettingsPage() {
                   <Switch
                     checked={settings.riskAlerts}
                     onCheckedChange={(checked) => updateSetting("riskAlerts", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Market Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Notify on price drawdowns, volume spikes, and weak market momentum
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.marketAlerts}
+                    onCheckedChange={(checked) => updateSetting("marketAlerts", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>News Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Notify on negative or high-severity company news events
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.newsAlerts}
+                    onCheckedChange={(checked) => updateSetting("newsAlerts", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Investment Health Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Notify when the composite research signal falls below watchlist thresholds
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.investmentHealthAlerts}
+                    onCheckedChange={(checked) => updateSetting("investmentHealthAlerts", checked)}
                   />
                 </div>
 
@@ -385,6 +504,120 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="intelligence" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="h-5 w-5" />
+                Risk & Signal Thresholds
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="riskThresholdHigh">High Risk Threshold</Label>
+                  <Input
+                    id="riskThresholdHigh"
+                    type="number"
+                    value={settings.riskThresholdHigh}
+                    onChange={(e) => updateSetting("riskThresholdHigh", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="riskThresholdCritical">Critical Risk Threshold</Label>
+                  <Input
+                    id="riskThresholdCritical"
+                    type="number"
+                    value={settings.riskThresholdCritical}
+                    onChange={(e) => updateSetting("riskThresholdCritical", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="investmentHealthWatchlist">Investment Health Watchlist</Label>
+                  <Input
+                    id="investmentHealthWatchlist"
+                    type="number"
+                    value={settings.investmentHealthWatchlist}
+                    onChange={(e) => updateSetting("investmentHealthWatchlist", e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                Thresholds only affect future UI behavior in this mock sprint. They are not persisted and do not change the scoring formulas.
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                AI Analyst Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Analyst Tone</Label>
+                  <Select
+                    value={settings.aiTone}
+                    onValueChange={(value) => updateSetting("aiTone", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="analyst">Analyst</SelectItem>
+                      <SelectItem value="audit">Audit-style</SelectItem>
+                      <SelectItem value="executive">Executive Brief</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Detail Level</Label>
+                  <Select
+                    value={settings.aiDetailLevel}
+                    onValueChange={(value) => updateSetting("aiDetailLevel", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="concise">Concise</SelectItem>
+                      <SelectItem value="balanced">Balanced</SelectItem>
+                      <SelectItem value="detailed">Detailed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Always Include Disclaimers</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display research-signal and mock-data limitations in analyst output
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.includeDisclaimers}
+                  onCheckedChange={(checked) => updateSetting("includeDisclaimers", checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Provider Calls</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Disabled for this sprint; no LLM or market/news provider calls are made
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.allowProviderCalls}
+                  onCheckedChange={(checked) => updateSetting("allowProviderCalls", checked)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="data" className="space-y-6">
           <Card>
             <CardHeader>
@@ -395,6 +628,63 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Financial Data Mode</Label>
+                    <Select
+                      value={settings.financialDataMode}
+                      onValueChange={(value) => updateSetting("financialDataMode", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mock">Mock Fixtures</SelectItem>
+                        <SelectItem value="upload_disabled">Upload Parser Disabled</SelectItem>
+                        <SelectItem value="api_disabled">Provider API Disabled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Market Data Provider</Label>
+                    <Select
+                      value={settings.marketProvider}
+                      onValueChange={(value) => updateSetting("marketProvider", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mock">Mock Provider</SelectItem>
+                        <SelectItem value="finnhub_disabled">Finnhub Placeholder</SelectItem>
+                        <SelectItem value="polygon_disabled">Polygon Placeholder</SelectItem>
+                        <SelectItem value="alpha_vantage_disabled">Alpha Vantage Placeholder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>News Provider</Label>
+                    <Select
+                      value={settings.newsProvider}
+                      onValueChange={(value) => updateSetting("newsProvider", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mock">Mock Provider</SelectItem>
+                        <SelectItem value="newsapi_disabled">NewsAPI Placeholder</SelectItem>
+                        <SelectItem value="gdelt_disabled">GDELT Placeholder</SelectItem>
+                        <SelectItem value="alpha_vantage_disabled">Alpha Vantage Placeholder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                  Provider selections are placeholders only. This sprint uses local TypeScript mock data and makes no external API calls.
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="apiKey">API Key</Label>
                   <div className="flex gap-2">
@@ -472,6 +762,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPageShell>
   );
 }

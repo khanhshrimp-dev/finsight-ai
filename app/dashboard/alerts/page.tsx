@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { allAlerts, mockCompanies } from "@/lib/mock";
 import { computeMockRiskScore, getRiskTierFromScore, getRiskLabel } from "@/lib/utils/risk";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,12 @@ function getAlertTypeLabel(type: Alert["type"]): string {
     case "fraud_signal":    return "Fraud Signal";
     case "liquidity":       return "Liquidity";
     case "debt":            return "Debt";
+    case "leverage":        return "Leverage";
+    case "financial_health_deteriorated": return "Financial Health";
+    case "investment_health_drop": return "Investment Health";
+    case "negative_news":   return "Negative News";
+    case "price_drawdown":  return "Price Drawdown";
+    case "volume_spike":    return "Volume Spike";
     case "general":         return "General";
   }
 }
@@ -53,6 +61,12 @@ function getAlertTypeBadgeClass(type: Alert["type"]): string {
     case "fraud_signal":     return "bg-red-500/10 text-red-600 border border-red-500/20 dark:text-red-400";
     case "liquidity":        return "bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:text-blue-400";
     case "debt":             return "bg-purple-500/10 text-purple-600 border border-purple-500/20 dark:text-purple-400";
+    case "leverage":         return "bg-purple-500/10 text-purple-600 border border-purple-500/20 dark:text-purple-400";
+    case "financial_health_deteriorated": return "bg-orange-500/10 text-orange-600 border border-orange-500/20 dark:text-orange-400";
+    case "investment_health_drop": return "bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400";
+    case "negative_news":    return "bg-red-500/10 text-red-600 border border-red-500/20 dark:text-red-400";
+    case "price_drawdown":   return "bg-red-500/10 text-red-600 border border-red-500/20 dark:text-red-400";
+    case "volume_spike":     return "bg-sky-500/10 text-sky-600 border border-sky-500/20 dark:text-sky-400";
     case "general":          return "bg-muted text-muted-foreground border border-border";
   }
 }
@@ -289,25 +303,22 @@ export default function AlertsPage() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 space-y-5 max-w-[1200px]">
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Alerts &amp; Watchlist</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Monitor risk events, track watched companies, and simulate financial scenarios.
-          </p>
-        </div>
-        {unreadCount > 0 && (
+    <DashboardPageShell>
+      <PageHeader
+        eyebrow="Operations"
+        title="Alerts & Watchlist"
+        description="Monitor risk events, track watched companies, and simulate financial scenarios with local mock data."
+        icon={Bell}
+        actions={unreadCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 px-3 py-1 text-sm font-medium">
             <Bell className="h-3.5 w-3.5" />
             {unreadCount} unread
           </span>
-        )}
-      </div>
+        ) : null}
+      />
 
       {/* ── Tab nav ── */}
-      <div className="flex items-center gap-1 border-b border-border pb-0">
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-0 scrollbar-thin">
         {(
           [
             { id: "alerts" as Tab, label: "Alerts", icon: Bell },
@@ -366,6 +377,12 @@ export default function AlertsPage() {
                 <option value="fraud_signal">Fraud Signal</option>
                 <option value="liquidity">Liquidity</option>
                 <option value="debt">Debt</option>
+                <option value="leverage">Leverage</option>
+                <option value="financial_health_deteriorated">Financial Health</option>
+                <option value="investment_health_drop">Investment Health</option>
+                <option value="negative_news">Negative News</option>
+                <option value="price_drawdown">Price Drawdown</option>
+                <option value="volume_spike">Volume Spike</option>
                 <option value="general">General</option>
               </select>
 
@@ -793,7 +810,7 @@ export default function AlertsPage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }
 

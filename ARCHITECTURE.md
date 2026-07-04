@@ -37,6 +37,8 @@ The application uses the App Router with top-level routes in `app/`.
 | `/dashboard/companies` | Company list | `lib/mock/companies.ts` |
 | `/dashboard/company/[id]` | Company detail, metrics, risk, fraud, market, news, and investment health sections | `getCompanyById`, `lib/risk`, `lib/market`, `lib/news`, `lib/investment` |
 | `/dashboard/compare` | Benchmark comparison | `lib/mock` |
+| `/dashboard/market` | Standalone market intelligence dashboard | `lib/market`, `lib/mock/company-intelligence.ts` |
+| `/dashboard/news` | Standalone news intelligence dashboard | `lib/news`, `lib/mock/company-intelligence.ts` |
 | `/dashboard/copilot` | Mock AI copilot | Local state plus `/api/copilot` style logic |
 | `/dashboard/reports` | Reports dashboard | Local mock reports plus chart data |
 | `/dashboard/upload` | Upload UI | Local state/mock processing |
@@ -57,13 +59,17 @@ The application uses the App Router with top-level routes in `app/`.
 ## Current Mock Data Structure
 
 - `types/index.ts` defines the main domain types: `Company`, `FinancialPeriod`, `FinancialMetrics`, `RiskDriver`, `FraudSignal`, `BenchmarkData`, `Alert`, `Recommendation`, `TimelineEvent`, `CopilotResponse`, and related app types.
-- `lib/mock/companies.ts` defines five demo companies:
+- `lib/mock/companies.ts` defines eight demo companies:
   - Apex Technologies: healthy profile
   - Redstone Retail Group: critical/distressed profile
   - Novara BioSciences: high fraud signal profile
   - Cascade Manufacturing: cyclical medium-risk profile
   - Meridian Health Systems: declining margin medium-risk profile
+  - Solara Energy Networks: renewable infrastructure growth with cash-flow and refinancing risk
+  - Harbor Foods: stable consumer staples quality profile
+  - Northstar Property Trust: leveraged real estate refinancing watchlist profile
 - `lib/mock/alerts.ts` defines alert/watchlist-style mock data.
+- `lib/mock/company-intelligence.ts` combines company, risk, market, news, alert, and investment-health outputs for UI and API routes.
 - `lib/mock/index.ts` exports dashboard stats and risk trend data.
 - `lib/market/mock-market-data.ts` defines mock market snapshots and historical prices by ticker.
 - `lib/news/mock-news-data.ts` defines mock company news items and event metadata by ticker.
@@ -76,6 +82,8 @@ The application uses the App Router with top-level routes in `app/`.
 | `POST /api/copilot` | Mock Only | Returns structured mock copilot responses. |
 | `POST /api/reports` | Mock Only | Returns JSON reports or placeholder download URLs. |
 | `POST /api/upload` | Mock Only | Simulates file upload/processing. |
+| `GET /api/companies` | Mock Only | Returns enriched mock company universe and portfolio intelligence stats. |
+| `GET /api/companies/[id]` | Mock Only | Returns one enriched mock company or a mock 404 response. |
 | `POST /api/risk/analyze` | Mock Only | Runs deterministic scoring and fraud rules against mock/company metrics. |
 | `POST /api/risk/simulate` | Mock Only | Runs deterministic scenario delta calculations. |
 | `GET /api/market/[ticker]` | Mock Only | Returns provider-ready mock market data and Market Momentum Score. |
@@ -116,6 +124,8 @@ Next.js route handlers should expose frontend-facing contracts:
 - `POST /api/investment/analyze`
 - `POST /api/ai/risk-analysis`
 - `POST /api/reports/generate`
+- `GET /api/companies`
+- `GET /api/companies/[id]`
 
 These routes should return typed JSON contracts and remain deployable on Vercel.
 

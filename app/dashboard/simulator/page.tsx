@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 import {
   Select,
   SelectContent,
@@ -25,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { RiskScoreGauge } from "@/components/ui/risk-score-gauge";
 import { mockCompanies } from "@/lib/mock";
+import { companyIntelligence } from "@/lib/mock/company-intelligence";
+import { calculateInvestmentHealthScore } from "@/lib/investment/investment-health";
 import {
   analyzeRisk,
   calculateScenarioDelta,
@@ -131,6 +135,8 @@ export default function ScenarioSimulatorPage() {
 
   const selectedCompany =
     mockCompanies.find((company) => company.id === selectedCompanyId) ?? mockCompanies[0];
+  const selectedIntelligence =
+    companyIntelligence.find((item) => item.company.id === selectedCompanyId) ?? companyIntelligence[0];
   const baseMetrics = useMemo(() => latestMetrics(selectedCompanyId), [selectedCompanyId]);
   const result = useMemo(
     () => calculateScenarioDelta(baseMetrics, scenarioMetrics),
@@ -151,6 +157,26 @@ export default function ScenarioSimulatorPage() {
       }),
     [result.explanation, scenarioMetrics, scenarioRisk, selectedCompany]
   );
+  const baseFinancialHealth = Math.max(0, 100 - result.baseScore);
+  const scenarioFinancialHealth = Math.max(0, 100 - result.scenarioScore);
+  const scenarioInvestmentHealth = useMemo(
+    () =>
+      calculateInvestmentHealthScore({
+        financialHealthScore: scenarioFinancialHealth,
+        riskScore: result.scenarioScore,
+        marketMomentumScore: selectedIntelligence.marketMomentumScore,
+        newsSentimentScore: selectedIntelligence.newsSentimentScore,
+        valuationScore: 50,
+      }),
+    [
+      result.scenarioScore,
+      scenarioFinancialHealth,
+      selectedIntelligence.marketMomentumScore,
+      selectedIntelligence.newsSentimentScore,
+    ]
+  );
+  const investmentHealthDelta =
+    scenarioInvestmentHealth.score - selectedIntelligence.investmentHealth.score;
 
   const updateMetric = (key: ScenarioMetricKey, value: number) => {
     setScenarioMetrics((current) => ({ ...current, [key]: value }));
@@ -186,24 +212,16 @@ export default function ScenarioSimulatorPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1500px]">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <SlidersHorizontal className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Scenario Simulator</h1>
-              <p className="text-sm text-muted-foreground">
-                Adjust key ratios and compare deterministic risk impact in real time.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <DashboardPageShell maxWidth="wide">
+      <PageHeader
+        eyebrow="What-if Analysis"
+        title="Scenario Simulator"
+        description="Adjust key ratios and compare deterministic risk, financial-health, and investment-health impact in real time."
+        icon={SlidersHorizontal}
+        actions={
+          <>
           <Select value={selectedCompanyId} onValueChange={(value) => value && handleCompanyChange(value)}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-full sm:w-64" aria-label="Select scenario company">
               <SelectValue placeholder="Select company" />
             </SelectTrigger>
             <SelectContent>
@@ -222,8 +240,9 @@ export default function ScenarioSimulatorPage() {
             <Save className="h-4 w-4" />
             Save Scenario
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.55fr)]">
         <div className="space-y-6">
@@ -283,6 +302,50 @@ export default function ScenarioSimulatorPage() {
                     <span className="font-mono font-semibold tabular-nums">{item.value}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border bg-muted/25 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Financial Health
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Original</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">{baseFinancialHealth}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Scenario</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">
+                      {scenarioFinancialHealth}
+                    </span>
+                  </div>
+                  <p className={cn("mt-2 text-xs font-semibold", scoreDeltaClass(baseFinancialHealth - scenarioFinancialHealth))}>
+                    {scenarioFinancialHealth - baseFinancialHealth >= 0 ? "+" : ""}
+                    {scenarioFinancialHealth - baseFinancialHealth} health pts
+                  </p>
+                </div>
+
+                <div className="rounded-lg border bg-muted/25 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Investment Health
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Original</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">
+                      {selectedIntelligence.investmentHealth.score}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Scenario</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">
+                      {scenarioInvestmentHealth.score}
+                    </span>
+                  </div>
+                  <p className={cn("mt-2 text-xs font-semibold", investmentHealthDelta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                    {investmentHealthDelta >= 0 ? "+" : ""}
+                    {investmentHealthDelta} investment pts
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -457,6 +520,6 @@ export default function ScenarioSimulatorPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

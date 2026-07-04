@@ -19,6 +19,10 @@ import {
   Building2,
 } from "lucide-react";
 import { mockCompanies } from "@/lib/mock";
+import {
+  companyIntelligence,
+  type CompanyIntelligence,
+} from "@/lib/mock/company-intelligence";
 import { formatMetric } from "@/lib/utils/risk";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/types";
@@ -26,6 +30,8 @@ import { RiskScoreGauge } from "@/components/ui/risk-score-gauge";
 import { RiskBadge, FraudBadge } from "@/components/ui/risk-badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -137,6 +143,22 @@ function formatValue(value: number | null, format: ComparisonMetric["format"]): 
   if (format === "ratio") return formatMetric(value, "ratio");
   if (format === "percent") return formatMetric(value, "percent");
   return formatMetric(value, "multiple");
+}
+
+function formatPercentValue(value: number | null): string {
+  if (value == null) return "N/A";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
+}
+
+function scoreTone(score: number, inverted = false) {
+  if (inverted) {
+    if (score >= 70) return "text-red-600 dark:text-red-400";
+    if (score >= 50) return "text-orange-600 dark:text-orange-400";
+    return "text-emerald-600 dark:text-emerald-400";
+  }
+  if (score >= 70) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 50) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 function getCellWinner(
@@ -375,6 +397,133 @@ function KeyDifferences({
   );
 }
 
+function IntelligenceComparison({
+  companyA,
+  companyB,
+}: {
+  companyA: CompanyIntelligence;
+  companyB: CompanyIntelligence;
+}) {
+  const rows = [
+    {
+      label: "Financial Health",
+      description: "Inverse of deterministic risk after latest metrics",
+      a: `${companyA.financialHealthScore}/100`,
+      b: `${companyB.financialHealthScore}/100`,
+      aScore: companyA.financialHealthScore,
+      bScore: companyB.financialHealthScore,
+      inverted: false,
+    },
+    {
+      label: "Risk Score",
+      description: "Higher means more modeled financial risk",
+      a: `${companyA.riskScore}/100`,
+      b: `${companyB.riskScore}/100`,
+      aScore: companyA.riskScore,
+      bScore: companyB.riskScore,
+      inverted: true,
+    },
+    {
+      label: "Investment Health",
+      description: "Composite mock research signal, not a recommendation",
+      a: `${companyA.investmentHealth.score}/100`,
+      b: `${companyB.investmentHealth.score}/100`,
+      aScore: companyA.investmentHealth.score,
+      bScore: companyB.investmentHealth.score,
+      inverted: false,
+    },
+    {
+      label: "Market Momentum",
+      description: "Price trend, drawdown, volume, volatility, and moving average rules",
+      a: `${companyA.marketMomentumScore}/100`,
+      b: `${companyB.marketMomentumScore}/100`,
+      aScore: companyA.marketMomentumScore,
+      bScore: companyB.marketMomentumScore,
+      inverted: false,
+    },
+    {
+      label: "News Sentiment",
+      description: "Recent event sentiment, severity, relevance, and confidence",
+      a: `${companyA.newsSentimentScore}/100`,
+      b: `${companyB.newsSentimentScore}/100`,
+      aScore: companyA.newsSentimentScore,
+      bScore: companyB.newsSentimentScore,
+      inverted: false,
+    },
+    {
+      label: "1Y Price Performance",
+      description: "Mock price series performance over the available year",
+      a: formatPercentValue(companyA.oneYearPerformance),
+      b: formatPercentValue(companyB.oneYearPerformance),
+      aScore: companyA.oneYearPerformance ?? 0,
+      bScore: companyB.oneYearPerformance ?? 0,
+      inverted: false,
+      percentage: true,
+    },
+  ];
+
+  const aWins = rows.filter((row) =>
+    row.inverted ? row.aScore < row.bScore : row.aScore > row.bScore
+  ).length;
+  const bWins = rows.filter((row) =>
+    row.inverted ? row.bScore < row.aScore : row.bScore > row.aScore
+  ).length;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Company Intelligence Comparison</CardTitle>
+        <CardDescription>
+          Financial health, risk, investment health, market, news, and price-performance context.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="py-3 pr-4 text-left">Signal</th>
+                <th className="px-4 py-3 text-right">{companyA.company.ticker}</th>
+                <th className="px-4 py-3 text-right">{companyB.company.ticker}</th>
+                <th className="py-3 pl-4 text-center">Edge</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {rows.map((row) => {
+                const aLeads = row.inverted ? row.aScore < row.bScore : row.aScore > row.bScore;
+                const bLeads = row.inverted ? row.bScore < row.aScore : row.bScore > row.aScore;
+                return (
+                  <tr key={row.label}>
+                    <td className="py-3 pr-4">
+                      <p className="font-medium">{row.label}</p>
+                      <p className="text-[11px] text-muted-foreground">{row.description}</p>
+                    </td>
+                    <td className={cn("px-4 py-3 text-right font-bold tabular-nums", row.percentage ? (row.aScore >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400") : scoreTone(row.aScore, row.inverted))}>
+                      {row.a}
+                    </td>
+                    <td className={cn("px-4 py-3 text-right font-bold tabular-nums", row.percentage ? (row.bScore >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400") : scoreTone(row.bScore, row.inverted))}>
+                      {row.b}
+                    </td>
+                    <td className="py-3 pl-4 text-center text-xs font-bold">
+                      {aLeads ? companyA.company.ticker : bLeads ? companyB.company.ticker : "Tie"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Mock analyst read: </span>
+          {aWins === bWins
+            ? "The selected companies are balanced across the composite intelligence signals."
+            : `${aWins > bWins ? companyA.company.name : companyB.company.name} leads on ${Math.max(aWins, bWins)} of ${rows.length} signals, but this is a research comparison only and not a buy/sell/hold view.`}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ComparePage() {
@@ -383,6 +532,8 @@ export default function ComparePage() {
 
   const companyA = mockCompanies.find((c) => c.id === idA)!;
   const companyB = mockCompanies.find((c) => c.id === idB)!;
+  const intelligenceA = companyIntelligence.find((item) => item.company.id === idA)!;
+  const intelligenceB = companyIntelligence.find((item) => item.company.id === idB)!;
 
   // Build radar data
   const radarData = useMemo(() => {
@@ -400,21 +551,14 @@ export default function ComparePage() {
   }, [companyA, companyB]);
 
   return (
-    <div className="min-h-full">
-      {/* Header */}
-      <div className="border-b bg-card/60 backdrop-blur-sm">
-        <div className="px-6 py-5">
-          <h1 className="text-2xl font-bold text-foreground mb-1">
-            Company Comparison
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-xl">
-            Side-by-side financial and risk analysis. Select any two companies
-            from the portfolio to compare metrics, scores, and risk profiles.
-          </p>
-        </div>
-      </div>
+    <DashboardPageShell maxWidth="wide">
+      <PageHeader
+        eyebrow="Peer Workbench"
+        title="Company Comparison"
+        description="Side-by-side financial, risk, investment, market, news, and price-performance comparison for any two mock companies."
+        icon={Building2}
+      />
 
-      <div className="px-6 py-6 space-y-6">
         {/* ── Selectors ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-2xl">
           <CompanySelector
@@ -475,6 +619,8 @@ export default function ComparePage() {
             </Card>
           ))}
         </div>
+
+        <IntelligenceComparison companyA={intelligenceA} companyB={intelligenceB} />
 
         {/* ── Comparison Table ───────────────────────────────────────── */}
         <Card>
@@ -796,7 +942,6 @@ export default function ComparePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardPageShell>
   );
 }

@@ -18,6 +18,8 @@ export interface Company {
   industry: string;
   description: string;
   headquarters: string;
+  country: string;
+  exchange: string;
   employees: number;
   founded: number;
   riskScore: number;
@@ -119,7 +121,19 @@ export interface Alert {
   id: string;
   companyId: string;
   companyName: string;
-  type: "risk_increase" | "threshold_breach" | "fraud_signal" | "liquidity" | "debt" | "general";
+  type:
+    | "risk_increase"
+    | "threshold_breach"
+    | "fraud_signal"
+    | "liquidity"
+    | "debt"
+    | "leverage"
+    | "financial_health_deteriorated"
+    | "investment_health_drop"
+    | "negative_news"
+    | "price_drawdown"
+    | "volume_spike"
+    | "general";
   severity: "info" | "warning" | "critical";
   title: string;
   description: string;
@@ -168,7 +182,18 @@ export interface Report {
   id: string;
   companyId: string;
   companyName: string;
-  type: "executive_summary" | "credit_risk" | "audit_brief" | "distress_watch" | "snapshot";
+  type:
+    | "executive_summary"
+    | "credit_risk"
+    | "audit_brief"
+    | "distress_watch"
+    | "snapshot"
+    | "company_snapshot"
+    | "financial_health"
+    | "risk_assessment"
+    | "investment_health"
+    | "news_market"
+    | "scenario_analysis";
   title: string;
   description: string;
   createdAt: string;

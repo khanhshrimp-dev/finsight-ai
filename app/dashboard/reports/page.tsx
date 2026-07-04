@@ -1,475 +1,451 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  FileText,
-  Download,
-  Calendar,
-  TrendingUp,
   BarChart3,
-  PieChart,
-  Filter,
-  RefreshCw,
+  Download,
   Eye,
-  Share,
+  FileText,
+  LineChart,
+  Newspaper,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RiskBadge } from "@/components/ui/risk-badge";
-import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
-import { mockCompanies, mockRiskTrend, mockDashboardStats } from "@/lib/mock";
+import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
+import { mockRiskTrend } from "@/lib/mock";
+import {
+  companyIntelligence,
+  portfolioIntelligenceStats,
+} from "@/lib/mock/company-intelligence";
+import { cn } from "@/lib/utils";
 
-type ReportType = "risk-summary" | "fraud-analysis" | "benchmark" | "trend-analysis";
+type ReportType =
+  | "company_snapshot"
+  | "financial_health"
+  | "risk_assessment"
+  | "investment_health"
+  | "news_market"
+  | "scenario_analysis";
 
-interface Report {
-  id: string;
+interface ReportTemplate {
+  type: ReportType;
   title: string;
   description: string;
-  type: ReportType;
-  generatedAt: string;
-  status: "ready" | "generating" | "failed";
-  downloadUrl?: string;
+  icon: typeof FileText;
+  sections: string[];
 }
 
-const mockReports: Report[] = [
+const reportTemplates: ReportTemplate[] = [
   {
-    id: "1",
-    title: "Portfolio Risk Summary - Q1 2024",
-    description: "Comprehensive risk assessment across all monitored companies",
-    type: "risk-summary",
-    generatedAt: "2024-03-31T10:00:00Z",
-    status: "ready",
-    downloadUrl: "/reports/risk-summary-q1-2024.pdf",
+    type: "company_snapshot",
+    title: "Company Snapshot",
+    description: "One-page company profile with financials, risk, market, news, and alerts.",
+    icon: FileText,
+    sections: ["Business profile", "Latest financials", "Key risks", "Recent alerts"],
   },
   {
-    id: "2",
-    title: "Fraud Signal Analysis Report",
-    description: "Detailed analysis of fraud indicators and red flags",
-    type: "fraud-analysis",
-    generatedAt: "2024-03-28T14:30:00Z",
-    status: "ready",
-    downloadUrl: "/reports/fraud-analysis-mar-2024.pdf",
+    type: "financial_health",
+    title: "Financial Health Report",
+    description: "Detailed liquidity, leverage, profitability, cash-flow, and growth review.",
+    icon: BarChart3,
+    sections: ["Financial health score", "Ratio trend", "Benchmark context", "Watch items"],
   },
   {
-    id: "3",
-    title: "Industry Benchmark Report",
-    description: "Peer comparison analysis across sectors",
-    type: "benchmark",
-    generatedAt: "2024-03-25T09:15:00Z",
-    status: "ready",
-    downloadUrl: "/reports/benchmark-mar-2024.pdf",
+    type: "risk_assessment",
+    title: "Risk Assessment Memo",
+    description: "Deterministic risk score, drivers, fraud screens, and monitoring actions.",
+    icon: ShieldAlert,
+    sections: ["Risk score", "Top drivers", "Fraud signals", "Recommended reviews"],
   },
   {
-    id: "4",
-    title: "Risk Trend Analysis - 12 Months",
-    description: "Historical risk score trends and projections",
-    type: "trend-analysis",
-    generatedAt: "2024-03-20T16:45:00Z",
-    status: "ready",
-    downloadUrl: "/reports/trend-analysis-12m.pdf",
+    type: "investment_health",
+    title: "Investment Health Brief",
+    description: "Composite research signal across financial, risk, market, news, and valuation placeholder inputs.",
+    icon: Sparkles,
+    sections: ["Composite score", "Component weights", "Drivers", "Research limitations"],
+  },
+  {
+    type: "news_market",
+    title: "News & Market Intelligence Report",
+    description: "Mock price momentum, volume, volatility, news sentiment, severity, and event timeline.",
+    icon: Newspaper,
+    sections: ["Market momentum", "News sentiment", "Recent events", "Signal conflicts"],
+  },
+  {
+    type: "scenario_analysis",
+    title: "Scenario Analysis Report",
+    description: "Before/after deterministic risk, health, and investment-health scenario memo.",
+    icon: LineChart,
+    sections: ["Scenario assumptions", "Risk delta", "Driver impact", "Management actions"],
   },
 ];
 
+const generatedReports = [
+  {
+    id: "report-apxt-snapshot",
+    title: "Apex Technologies Company Snapshot",
+    type: "company_snapshot" as ReportType,
+    companyId: "apex-technologies",
+    createdAt: "2026-07-03T15:20:00.000Z",
+    status: "ready",
+    pages: 4,
+  },
+  {
+    id: "report-rrgi-risk",
+    title: "Redstone Retail Risk Assessment Memo",
+    type: "risk_assessment" as ReportType,
+    companyId: "redstone-retail",
+    createdAt: "2026-07-02T18:45:00.000Z",
+    status: "ready",
+    pages: 7,
+  },
+  {
+    id: "report-nspr-news-market",
+    title: "Northstar News & Market Intelligence Report",
+    type: "news_market" as ReportType,
+    companyId: "northstar-properties",
+    createdAt: "2026-07-01T09:10:00.000Z",
+    status: "ready",
+    pages: 6,
+  },
+];
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function scoreColor(score: number, inverted = false) {
+  if (inverted) {
+    if (score >= 70) return "text-red-600 dark:text-red-400";
+    if (score >= 50) return "text-orange-600 dark:text-orange-400";
+    return "text-emerald-600 dark:text-emerald-400";
+  }
+  if (score >= 70) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 50) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
+}
+
 export default function ReportsPage() {
-  const [selectedReportType, setSelectedReportType] = useState<ReportType | "all">("all");
+  const [selectedCompanyId, setSelectedCompanyId] = useState(companyIntelligence[0].company.id);
+  const [selectedReportType, setSelectedReportType] = useState<ReportType>("company_snapshot");
   const [isGenerating, setIsGenerating] = useState(false);
+  const selectedCompany =
+    companyIntelligence.find((item) => item.company.id === selectedCompanyId) ?? companyIntelligence[0];
+  const selectedTemplate =
+    reportTemplates.find((template) => template.type === selectedReportType) ?? reportTemplates[0];
 
-  const filteredReports = selectedReportType === "all"
-    ? mockReports
-    : mockReports.filter(r => r.type === selectedReportType);
+  const filteredReports = useMemo(
+    () =>
+      generatedReports.map((report) => ({
+        ...report,
+        company: companyIntelligence.find((item) => item.company.id === report.companyId)?.company,
+        template: reportTemplates.find((template) => template.type === report.type),
+      })),
+    []
+  );
 
-  const handleGenerateReport = async (type: ReportType) => {
+  const handleGenerate = () => {
     setIsGenerating(true);
-    // Simulate API call - in real app, would call API with type
-    console.log(`Generating ${type} report`);
-    setTimeout(() => {
-      setIsGenerating(false);
-      // In real app, would add new report to list
-    }, 3000);
+    window.setTimeout(() => setIsGenerating(false), 1200);
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const previewBullets = [
+    `Financial Health Score: ${selectedCompany.financialHealthScore}/100`,
+    `Risk Score: ${selectedCompany.riskScore}/100 (${selectedCompany.riskLabel})`,
+    `Investment Health: ${selectedCompany.investmentHealth.score}/100 (${selectedCompany.investmentHealth.label})`,
+    `Market Momentum: ${selectedCompany.marketMomentumScore}/100`,
+    `News Sentiment: ${selectedCompany.newsSentimentScore}/100 with ${selectedCompany.negativeNewsCount} negative event(s)`,
+    `Alerts: ${selectedCompany.unreadAlertCount} unread of ${selectedCompany.alertCount} total`,
+  ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-          <p className="text-muted-foreground">
-            Generate and download comprehensive financial analysis reports
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+    <DashboardPageShell maxWidth="wide">
+      <PageHeader
+        eyebrow="Report Workspace"
+        title="Reports"
+        description="Build mock analyst reports from local financial, risk, market, news, and investment-health data."
+        icon={FileText}
+        iconClassName="text-indigo-600 dark:text-indigo-400"
+        actions={
+          <>
           <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
-          <Button size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Generate New Report
+          <Button size="sm" onClick={handleGenerate} disabled={isGenerating}>
+            <FileText className="h-4 w-4" />
+            {isGenerating ? "Generating..." : "Generate Preview"}
           </Button>
-        </div>
+          </>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Report Templates</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums">{reportTemplates.length}</p>
+            <p className="text-xs text-muted-foreground">Mock analyst formats</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Generated Reports</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums">{generatedReports.length}</p>
+            <p className="text-xs text-muted-foreground">Local metadata only</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avg Risk</p>
+            <p className={cn("mt-1 text-3xl font-bold tabular-nums", scoreColor(portfolioIntelligenceStats.averageRiskScore, true))}>
+              {portfolioIntelligenceStats.averageRiskScore}
+            </p>
+            <p className="text-xs text-muted-foreground">Portfolio context</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Mock Exports</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums">JSON</p>
+            <p className="text-xs text-muted-foreground">PDF/DOCX not implemented</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="generated">Generated Reports</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics Dashboard</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{mockReports.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  +2 from last month
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Risk Reports</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {mockReports.filter(r => r.type === "risk-summary").length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Most requested
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Fraud Analysis</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {mockReports.filter(r => r.type === "fraud-analysis").length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Critical insights
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Generation Time</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">2.3m</div>
-                <p className="text-xs text-muted-foreground">
-                  -15% from last month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Report Types */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.9fr)_minmax(0,1.1fr)]">
+        <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Available Report Types</CardTitle>
+              <CardTitle>Report Builder</CardTitle>
+              <CardDescription>Select a company and report type for a mock preview.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Risk Summary Report</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Comprehensive risk assessment with key metrics
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerateReport("risk-summary")}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      "Generate Report"
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Company</p>
+                <Select
+                  value={selectedCompanyId}
+                  onValueChange={(value) => {
+                    if (value) setSelectedCompanyId(value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companyIntelligence.map((item) => (
+                      <SelectItem key={item.company.id} value={item.company.id}>
+                        {item.company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Report Type</p>
+                <Select value={selectedReportType} onValueChange={(value) => setSelectedReportType(value as ReportType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reportTemplates.map((template) => (
+                      <SelectItem key={template.type} value={template.type}>
+                        {template.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+                Mock generation returns an on-screen preview and JSON-ready content only. Real PDF/DOCX export belongs to a later reporting phase.
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Templates</CardTitle>
+              <CardDescription>Report formats supported by the demo UI.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {reportTemplates.map((template) => {
+                const Icon = template.icon;
+                const selected = template.type === selectedReportType;
+                return (
+                  <button
+                    key={template.type}
+                    onClick={() => setSelectedReportType(template.type)}
+                    className={cn(
+                      "w-full rounded-lg border p-3 text-left transition-colors",
+                      selected ? "border-primary/40 bg-primary/5" : "hover:bg-muted/30"
                     )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{template.title}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {template.description}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle>{selectedTemplate.title} Preview</CardTitle>
+                  <CardDescription>
+                    {selectedCompany.company.name} · {selectedCompany.company.ticker} · {selectedCompany.company.exchange}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4" />
+                    Preview
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4" />
+                    JSON
                   </Button>
                 </div>
-
-                <div className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <BarChart3 className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Fraud Analysis Report</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Detailed fraud signal detection and analysis
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerateReport("fraud-analysis")}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      "Generate Report"
-                    )}
-                  </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 pt-5">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Financial Health</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.financialHealthScore))}>
+                    {selectedCompany.financialHealthScore}
+                  </p>
                 </div>
-
-                <div className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <PieChart className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Benchmark Report</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Peer comparison and industry benchmarking
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerateReport("benchmark")}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      "Generate Report"
-                    )}
-                  </Button>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Risk Score</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.riskScore, true))}>
+                    {selectedCompany.riskScore}
+                  </p>
                 </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Investment Health</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.investmentHealth.score))}>
+                    {selectedCompany.investmentHealth.score}
+                  </p>
+                </div>
+              </div>
 
-                <div className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="mb-2 text-sm font-semibold">Included Sections</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTemplate.sections.map((section) => (
+                    <Badge key={section} variant="outline">
+                      {section}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold">Preview Narrative</p>
+                <div className="rounded-lg border bg-muted/25 p-4 text-sm leading-relaxed text-muted-foreground">
+                  {selectedCompany.company.aiSummary}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold">Preview Signals</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {previewBullets.map((item) => (
+                    <div key={item} className="rounded-lg border p-3 text-sm">
+                      {item}
                     </div>
-                    <div>
-                      <h3 className="font-semibold">Trend Analysis Report</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Historical trends and future projections
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerateReport("trend-analysis")}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      "Generate Report"
-                    )}
-                  </Button>
+                  ))}
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="generated" className="space-y-6">
-          {/* Filters */}
-          <div className="flex items-center gap-4">
-            <Select value={selectedReportType} onValueChange={(value) => value && setSelectedReportType(value as ReportType | "all")}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Reports</SelectItem>
-                <SelectItem value="risk-summary">Risk Summary</SelectItem>
-                <SelectItem value="fraud-analysis">Fraud Analysis</SelectItem>
-                <SelectItem value="benchmark">Benchmark</SelectItem>
-                <SelectItem value="trend-analysis">Trend Analysis</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              More Filters
-            </Button>
-          </div>
-
-          {/* Reports Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Generated Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Report Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Generated</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReports.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{report.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {report.description}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {report.type.replace("-", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(report.generatedAt)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={report.status === "ready" ? "default" : report.status === "generating" ? "secondary" : "destructive"}
-                          className="capitalize"
-                        >
-                          {report.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Share className="h-4 w-4" />
-                          </Button>
-                          {report.downloadUrl && (
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          {/* Analytics Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Risk Score Trends</CardTitle>
+                <CardTitle>Portfolio Risk Trend</CardTitle>
+                <CardDescription>Shared mock trend included in portfolio reports.</CardDescription>
               </CardHeader>
               <CardContent>
-                <RiskTrendChart data={mockRiskTrend} />
+                <div className="h-[220px]">
+                  <RiskTrendChart data={mockRiskTrend} />
+                </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Risk Distribution</CardTitle>
+                <CardDescription>Current eight-company mock universe.</CardDescription>
               </CardHeader>
               <CardContent>
-                <RiskDistributionChart data={mockDashboardStats.riskDistribution} />
+                <RiskDistributionChart data={portfolioIntelligenceStats.riskDistribution} />
               </CardContent>
             </Card>
           </div>
+        </div>
+      </div>
 
-          {/* Top Risk Companies */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Companies by Risk Level</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Sector</TableHead>
-                    <TableHead>Risk Score</TableHead>
-                    <TableHead>Fraud Risk</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockCompanies
-                    .sort((a, b) => b.riskScore - a.riskScore)
-                    .slice(0, 5)
-                    .map((company) => (
-                      <TableRow key={company.id}>
-                        <TableCell>
-                          <div className="font-medium">{company.name}</div>
-                          <div className="text-sm text-muted-foreground">{company.ticker}</div>
-                        </TableCell>
-                        <TableCell>{company.sector}</TableCell>
-                        <TableCell>
-                          <RiskBadge tier={company.riskTier} />
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={company.fraudRisk === "high" ? "destructive" : company.fraudRisk === "medium" ? "secondary" : "outline"}
-                            className="capitalize"
-                          >
-                            {company.fraudRisk}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(company.lastUpdated).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Generated Reports</CardTitle>
+          <CardDescription>Mock metadata for previously generated demo reports.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {filteredReports.map((report) => (
+            <div key={report.id} className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold">{report.title}</p>
+                  <Badge variant="outline">{report.template?.title ?? report.type}</Badge>
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{report.status}</Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {report.company?.name ?? "Company"} · {report.pages} pages · {formatDate(report.createdAt)}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/dashboard/company/${report.companyId}`}>
+                  <Button variant="outline" size="sm">
+                    View Company
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4" />
+                  Mock JSON
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </DashboardPageShell>
   );
 }

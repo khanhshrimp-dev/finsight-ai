@@ -15,24 +15,32 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { allAlerts } from "@/lib/mock";
+import { MobileDashboardNav } from "@/components/dashboard/app-sidebar";
 
 export function TopNavbar() {
   const { theme, setTheme } = useTheme();
   const unreadCount = allAlerts.filter((a) => !a.read).length;
 
   return (
-    <header className="flex h-14 items-center border-b bg-background/80 backdrop-blur-sm px-4 gap-4 shrink-0 sticky top-0 z-30">
-      {/* Search */}
-      <div className="relative flex-1 max-w-sm">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b bg-background/85 px-3 backdrop-blur-md sm:px-4">
+      <MobileDashboardNav />
+
+      <div className="hidden min-w-0 md:block">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Analyst Workspace
+        </p>
+      </div>
+
+      <div className="relative hidden flex-1 max-w-sm md:block">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
-          placeholder="Search companies..."
+          placeholder="Search companies, tickers, reports..."
           className="pl-9 h-8 text-sm bg-muted/50 border-0 focus-visible:ring-1"
+          aria-label="Search dashboard"
         />
       </div>
 
-      <div className="flex items-center gap-1 ml-auto">
-        {/* Theme toggle */}
+      <div className="ml-auto flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -44,9 +52,8 @@ export function TopNavbar() {
           <span className="sr-only">Toggle theme</span>
         </Button>
 
-        {/* Notifications */}
         <Link href="/dashboard/alerts">
-          <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+          <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Open alerts">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 text-[9px] bg-red-500 hover:bg-red-500 flex items-center justify-center rounded-full">
@@ -56,7 +63,6 @@ export function TopNavbar() {
           </Button>
         </Link>
 
-        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 gap-2 pl-1.5 pr-2">

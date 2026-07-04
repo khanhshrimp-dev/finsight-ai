@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { cn } from "@/lib/utils";
 
 interface UploadedFile {
@@ -31,6 +33,15 @@ interface UploadedFile {
   error?: string;
 }
 
+interface ManualFinancialInput {
+  companyName: string;
+  ticker: string;
+  revenue: string;
+  netIncome: string;
+  currentRatio: string;
+  debtToEquity: string;
+}
+
 const acceptedFileTypes = {
   "text/csv": [".csv"],
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
@@ -38,6 +49,30 @@ const acceptedFileTypes = {
   "application/pdf": [".pdf"],
   "text/plain": [".txt"],
 };
+
+const sampleDatasets = [
+  {
+    id: "healthy-tech",
+    name: "Healthy SaaS company",
+    rows: 4,
+    status: "Valid",
+    preview: ["FY2024", "$13.1B revenue", "17.0% net margin", "3.71x current ratio"],
+  },
+  {
+    id: "distressed-retail",
+    name: "Distressed retail company",
+    rows: 4,
+    status: "Warnings",
+    preview: ["FY2024", "$3.2B revenue", "-13.0% net margin", "0.50x current ratio"],
+  },
+  {
+    id: "real-estate-watchlist",
+    name: "Real estate refinancing watchlist",
+    rows: 4,
+    status: "Warnings",
+    preview: ["FY2024", "$2.1B revenue", "-4.0% net margin", "3.25x debt/equity"],
+  },
+];
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
@@ -58,6 +93,17 @@ export default function UploadPage() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedSampleId, setSelectedSampleId] = useState(sampleDatasets[0].id);
+  const [manualInput, setManualInput] = useState<ManualFinancialInput>({
+    companyName: "Demo Manufacturing Co.",
+    ticker: "DMFG",
+    revenue: "1250",
+    netIncome: "84",
+    currentRatio: "1.45",
+    debtToEquity: "0.82",
+  });
+  const [analysisState, setAnalysisState] = useState<"idle" | "validating" | "ready">("idle");
+  const selectedSample = sampleDatasets.find((sample) => sample.id === selectedSampleId) ?? sampleDatasets[0];
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -176,6 +222,16 @@ export default function UploadPage() {
     setFiles(prev => prev.filter(f => f.id !== id));
   };
 
+  const updateManualInput = (key: keyof ManualFinancialInput, value: string) => {
+    setManualInput((current) => ({ ...current, [key]: value }));
+    setAnalysisState("idle");
+  };
+
+  const runMockAnalysis = () => {
+    setAnalysisState("validating");
+    window.setTimeout(() => setAnalysisState("ready"), 900);
+  };
+
   const getStatusColor = (status: UploadedFile["status"]) => {
     switch (status) {
       case "uploading":
@@ -205,16 +261,14 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Data Upload</h1>
-          <p className="text-muted-foreground">
-            Upload financial data files to analyze and monitor companies
-          </p>
-        </div>
-      </div>
+    <DashboardPageShell maxWidth="wide">
+      <PageHeader
+        eyebrow="Mock Intake"
+        title="Data Upload"
+        description="Preview file validation, sample datasets, and manual financial inputs without real parsing or persistence."
+        icon={CloudUpload}
+        iconClassName="text-sky-600 dark:text-sky-400"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Area */}
@@ -290,6 +344,155 @@ export default function UploadPage() {
             </CardContent>
           </Card>
 
+          <div className="mt-6 grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Sample Dataset
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <select
+                  value={selectedSampleId}
+                  onChange={(event) => {
+                    setSelectedSampleId(event.target.value);
+                    setAnalysisState("idle");
+                  }}
+                  className="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+                >
+                  {sampleDatasets.map((sample) => (
+                    <option key={sample.id} value={sample.id} className="bg-background">
+                      {sample.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">{selectedSample.name}</p>
+                    <Badge variant={selectedSample.status === "Valid" ? "secondary" : "outline"}>
+                      {selectedSample.status}
+                    </Badge>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {selectedSample.preview.map((item) => (
+                      <div key={item} className="rounded-md bg-background px-3 py-2 text-xs">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {selectedSample.rows} fiscal periods will be loaded into the mock parser preview.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5" />
+                  Manual Financial Input
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {([
+                    ["companyName", "Company Name"],
+                    ["ticker", "Ticker"],
+                    ["revenue", "Revenue ($M)"],
+                    ["netIncome", "Net Income ($M)"],
+                    ["currentRatio", "Current Ratio"],
+                    ["debtToEquity", "Debt / Equity"],
+                  ] as const).map(([key, label]) => (
+                    <label key={key} className="space-y-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                      <input
+                        value={manualInput[key]}
+                        onChange={(event) => updateManualInput(key, event.target.value)}
+                        className="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Parsing Preview & Validation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30 text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="px-3 py-2 text-left">Source</th>
+                      <th className="px-3 py-2 text-left">Company</th>
+                      <th className="px-3 py-2 text-right">Revenue</th>
+                      <th className="px-3 py-2 text-right">Net Income</th>
+                      <th className="px-3 py-2 text-right">Current Ratio</th>
+                      <th className="px-3 py-2 text-right">Debt / Equity</th>
+                      <th className="px-3 py-2 text-left">Validation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="px-3 py-2">Sample</td>
+                      <td className="px-3 py-2">{selectedSample.name}</td>
+                      <td className="px-3 py-2 text-right">{selectedSample.preview[1]}</td>
+                      <td className="px-3 py-2 text-right">{selectedSample.preview[2]}</td>
+                      <td className="px-3 py-2 text-right">{selectedSample.preview[3]}</td>
+                      <td className="px-3 py-2 text-right">Mock</td>
+                      <td className="px-3 py-2">
+                        <Badge variant="outline">{selectedSample.status}</Badge>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2">Manual</td>
+                      <td className="px-3 py-2">{manualInput.companyName} ({manualInput.ticker})</td>
+                      <td className="px-3 py-2 text-right">${manualInput.revenue}M</td>
+                      <td className="px-3 py-2 text-right">${manualInput.netIncome}M</td>
+                      <td className="px-3 py-2 text-right">{manualInput.currentRatio}x</td>
+                      <td className="px-3 py-2 text-right">{manualInput.debtToEquity}x</td>
+                      <td className="px-3 py-2">
+                        <Badge variant="secondary">Ready</Badge>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                <div>
+                  <p className="text-sm font-semibold">Mock validation state</p>
+                  <p className="text-xs text-muted-foreground">
+                    Required columns are present. Real parsing and persistence are not implemented in this sprint.
+                  </p>
+                </div>
+                <Button onClick={runMockAnalysis} disabled={analysisState === "validating"}>
+                  {analysisState === "validating" ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Validating
+                    </>
+                  ) : analysisState === "ready" ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Analysis Ready
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Analyze Mock Data
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Upload Progress */}
           {files.length > 0 && (
             <Card className="mt-6">
@@ -353,15 +556,15 @@ export default function UploadPage() {
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
                 <Database className="h-4 w-4 mr-2" />
-                Connect Database
+                Preview Database Mapping
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <CloudUpload className="h-4 w-4 mr-2" />
-                Import from API
+                Preview API Import
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Sample Data
+                Load Sample Data
               </Button>
             </CardContent>
           </Card>
@@ -402,16 +605,16 @@ export default function UploadPage() {
               <div className="text-sm">
                 <p className="font-medium">What happens next?</p>
                 <ol className="mt-2 space-y-1 text-muted-foreground list-decimal list-inside">
-                  <li>Files are validated and processed</li>
-                  <li>Data is extracted and normalized</li>
-                  <li>Risk analysis is performed</li>
-                  <li>Results are added to your dashboard</li>
+                  <li>Files are validated in local UI state</li>
+                  <li>Sample fields are shown in the preview table</li>
+                  <li>Mock analysis status is updated on screen</li>
+                  <li>No records are persisted or sent to a provider</li>
                 </ol>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

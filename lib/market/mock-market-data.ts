@@ -117,6 +117,51 @@ const seeds: MockMarketSeed[] = [
       [1_240_000, 1_260_000, 1_310_000, 1_420_000, 1_500_000, 1_620_000, 1_680_000, 1_740_000, 1_820_000, 1_930_000, 1_760_000, 1_690_000, 1_880_000]
     ),
   },
+  {
+    ticker: "SLEN",
+    companyId: "solara-energy",
+    companyName: "Solara Energy Networks",
+    exchange: "NASDAQ",
+    previousClose: 18.92,
+    averageVolume: 3_250_000,
+    marketCap: 2_850_000_000,
+    fiftyTwoWeekHigh: 34.2,
+    fiftyTwoWeekLow: 15.8,
+    prices: series(
+      [25.4, 28.2, 31.8, 33.6, 29.7, 27.1, 24.5, 22.2, 20.4, 18.8, 16.9, 18.9, 17.64],
+      [2_180_000, 2_420_000, 2_960_000, 3_880_000, 4_200_000, 3_700_000, 3_540_000, 3_680_000, 3_920_000, 4_350_000, 4_760_000, 4_180_000, 5_050_000]
+    ),
+  },
+  {
+    ticker: "HRBF",
+    companyId: "harbor-foods",
+    companyName: "Harbor Foods",
+    exchange: "NYSE",
+    previousClose: 62.55,
+    averageVolume: 980_000,
+    marketCap: 9_600_000_000,
+    fiftyTwoWeekHigh: 64.1,
+    fiftyTwoWeekLow: 51.2,
+    prices: series(
+      [52.8, 53.6, 54.7, 55.4, 56.8, 57.9, 58.5, 59.2, 60.1, 61.3, 62.0, 62.5, 63.12],
+      [760_000, 800_000, 820_000, 870_000, 910_000, 930_000, 950_000, 990_000, 1_010_000, 1_040_000, 1_020_000, 970_000, 1_080_000]
+    ),
+  },
+  {
+    ticker: "NSPR",
+    companyId: "northstar-properties",
+    companyName: "Northstar Property Trust",
+    exchange: "NYSE",
+    previousClose: 9.15,
+    averageVolume: 2_750_000,
+    marketCap: 780_000_000,
+    fiftyTwoWeekHigh: 19.8,
+    fiftyTwoWeekLow: 7.9,
+    prices: series(
+      [18.6, 17.9, 16.8, 15.2, 13.4, 12.1, 10.9, 10.2, 9.7, 8.9, 8.1, 9.1, 8.42],
+      [1_420_000, 1_560_000, 1_780_000, 2_020_000, 2_480_000, 2_820_000, 3_140_000, 3_600_000, 4_050_000, 4_620_000, 5_200_000, 4_760_000, 5_540_000]
+    ),
+  },
 ];
 
 function buildMarketData(seed: MockMarketSeed): CompanyMarketData {

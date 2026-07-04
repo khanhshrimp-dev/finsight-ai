@@ -48,6 +48,8 @@ export const apexTech: Company = {
   industry: "Enterprise Software",
   description: "Leading provider of cloud-based enterprise resource planning and analytics solutions serving Fortune 500 clients globally.",
   headquarters: "San Jose, CA",
+  country: "United States",
+  exchange: "NASDAQ",
   employees: 18400,
   founded: 2003,
   riskScore: 12,
@@ -120,6 +122,8 @@ export const redstoneRetail: Company = {
   industry: "Department Stores",
   description: "Multi-format retail operator with 340 stores across the US, facing structural headwinds from e-commerce disruption and a heavily leveraged balance sheet from a 2018 LBO.",
   headquarters: "Columbus, OH",
+  country: "United States",
+  exchange: "NYSE",
   employees: 22000,
   founded: 1986,
   riskScore: 84,
@@ -197,6 +201,8 @@ export const novaraBio: Company = {
   industry: "Biotechnology",
   description: "Clinical-stage biotechnology company reporting explosive revenue growth in specialty therapeutics. Several financial anomalies have triggered automated fraud screening flags.",
   headquarters: "Cambridge, MA",
+  country: "United States",
+  exchange: "NASDAQ",
   employees: 1840,
   founded: 2017,
   riskScore: 67,
@@ -273,6 +279,8 @@ export const cascadeMfg: Company = {
   industry: "Industrial Equipment",
   description: "Mid-cap industrial equipment manufacturer with significant exposure to construction and mining end-markets, resulting in cyclical revenue patterns tied to commodity cycles.",
   headquarters: "Pittsburgh, PA",
+  country: "United States",
+  exchange: "NYSE",
   employees: 9200,
   founded: 1974,
   riskScore: 41,
@@ -346,6 +354,8 @@ export const meridianHealth: Company = {
   industry: "Hospital & Health Systems",
   description: "Regional hospital network operating 28 facilities across the Southeast US, experiencing margin compression from labor cost inflation, Medicare reimbursement changes, and integration costs from recent acquisitions.",
   headquarters: "Nashville, TN",
+  country: "United States",
+  exchange: "NYSE",
   employees: 34000,
   founded: 1991,
   riskScore: 55,
@@ -397,12 +407,235 @@ export const meridianHealth: Company = {
   ],
 };
 
+// ─── Company 6: Solara Energy Networks - Growth with Cash-Flow Risk ─────────
+const solaraPeriods: FinancialPeriod[] = (() => {
+  const raw = [
+    { period: "FY2021", year: 2021, revenue: 980, grossProfit: 255, operatingIncome: 39, netIncome: 20, ebitda: 98, totalAssets: 2100, totalLiabilities: 1155, totalEquity: 945, currentAssets: 520, currentLiabilities: 390, cash: 210, accountsReceivable: 180, inventory: 90, shortTermDebt: 85, longTermDebt: 720, interestExpense: 42, operatingCashFlow: 35, capex: 310, freeCashFlow: -275, riskScore: 48 },
+    { period: "FY2022", year: 2022, revenue: 1350, grossProfit: 378, operatingIncome: 68, netIncome: 34, ebitda: 149, totalAssets: 2950, totalLiabilities: 1682, totalEquity: 1268, currentAssets: 690, currentLiabilities: 520, cash: 240, accountsReceivable: 250, inventory: 130, shortTermDebt: 115, longTermDebt: 1040, interestExpense: 58, operatingCashFlow: 41, capex: 470, freeCashFlow: -429, riskScore: 53 },
+    { period: "FY2023", year: 2023, revenue: 1880, grossProfit: 526, operatingIncome: 75, netIncome: 19, ebitda: 207, totalAssets: 4100, totalLiabilities: 2583, totalEquity: 1517, currentAssets: 850, currentLiabilities: 690, cash: 205, accountsReceivable: 390, inventory: 160, shortTermDebt: 160, longTermDebt: 1660, interestExpense: 86, operatingCashFlow: 28, capex: 650, freeCashFlow: -622, riskScore: 59 },
+    { period: "FY2024", year: 2024, revenue: 2440, grossProfit: 622, operatingIncome: 49, netIncome: -37, ebitda: 244, totalAssets: 5200, totalLiabilities: 3536, totalEquity: 1664, currentAssets: 920, currentLiabilities: 820, cash: 160, accountsReceivable: 540, inventory: 170, shortTermDebt: 240, longTermDebt: 2260, interestExpense: 118, operatingCashFlow: -12, capex: 720, freeCashFlow: -732, riskScore: 64 },
+  ];
+  return raw.map((r, i) => {
+    const base = { ...r, quarter: undefined };
+    const metrics = calcMetrics(base, i > 0 ? raw[i - 1].revenue : undefined);
+    return { ...base, metrics };
+  });
+})();
+
+export const solaraEnergy: Company = {
+  id: "solara-energy",
+  name: "Solara Energy Networks",
+  ticker: "SLEN",
+  sector: "Energy",
+  industry: "Renewable Power Infrastructure",
+  description: "Utility-scale solar and storage developer expanding rapidly across grid-constrained markets, with heavy project capex and rising refinancing needs.",
+  headquarters: "Austin, TX",
+  country: "United States",
+  exchange: "NASDAQ",
+  employees: 4200,
+  founded: 2012,
+  riskScore: 64,
+  riskTier: "high",
+  fraudRisk: "low",
+  confidenceScore: 83,
+  lastUpdated: "2024-12-31",
+  periods: solaraPeriods,
+  riskDrivers: [
+    { factor: "Capex Intensity", impact: 0.84, direction: "negative", description: "Growth requires large project capex, keeping free cash flow deeply negative despite revenue expansion", category: "efficiency" },
+    { factor: "Debt-Funded Growth", impact: 0.78, direction: "negative", description: "Debt-to-equity increased to 1.50x as new project financing outpaced retained earnings", category: "leverage" },
+    { factor: "Revenue Momentum", impact: 0.66, direction: "positive", description: "Revenue grew 30% in FY2024 on new interconnection and storage contracts", category: "growth" },
+    { factor: "Liquidity Cushion", impact: 0.58, direction: "negative", description: "Current ratio of 1.12x and falling cash reduce flexibility if project timelines slip", category: "liquidity" },
+    { factor: "Interest Coverage", impact: 0.52, direction: "negative", description: "Interest coverage fell below 1.0x as rate-sensitive project debt expanded", category: "leverage" },
+  ],
+  fraudSignals: [
+    { id: "fs-s1", name: "Revenue-Cash Flow Divergence", severity: "medium", detected: true, description: "Revenue growth is not yet converting to operating cash flow because projects remain in construction and receivables expanded.", metric: "OCF/Revenue", value: -0.005, benchmark: 0.07, category: "cashflow" },
+    { id: "fs-s2", name: "Margin Pressure", severity: "low", detected: false, description: "Gross margin compression is consistent with battery input costs and tax-credit timing.", category: "margin" },
+    { id: "fs-s3", name: "Receivables Monitoring", severity: "medium", detected: true, description: "Accounts receivable increased to 22% of revenue as milestone billing stretched.", metric: "AR/Revenue", value: 0.22, benchmark: 0.16, category: "receivables" },
+  ],
+  benchmarkData: {
+    sector: "Energy",
+    peerGroup: "Renewable Infrastructure Developers",
+    metrics: [
+      { name: "Current Ratio", company: 1.12, industryAverage: 1.45, topQuartile: 2.0, peerMedian: 1.35, percentileRank: 24 },
+      { name: "Net Margin", company: -0.015, industryAverage: 0.045, topQuartile: 0.11, peerMedian: 0.035, percentileRank: 18 },
+      { name: "Revenue Growth", company: 0.30, industryAverage: 0.16, topQuartile: 0.31, peerMedian: 0.13, percentileRank: 76 },
+      { name: "Debt-to-Equity", company: 1.50, industryAverage: 1.05, topQuartile: 0.65, peerMedian: 0.98, percentileRank: 22 },
+      { name: "Interest Coverage", company: 0.42, industryAverage: 2.1, topQuartile: 4.2, peerMedian: 1.8, percentileRank: 11 },
+      { name: "FCF Margin", company: -0.30, industryAverage: -0.08, topQuartile: 0.04, peerMedian: -0.06, percentileRank: 9 },
+    ],
+  },
+  aiSummary: "Solara Energy Networks has strong top-line growth but a fragile funding profile. Project capex and milestone billing timing have kept free cash flow negative, while interest coverage fell below 1.0x in FY2024. The profile is not a fraud conclusion; it is a project-finance execution and liquidity risk story. The key question is whether contracted projects reach cash generation before refinancing pressure intensifies.",
+  recommendations: [
+    { id: "r-s1", priority: "high", category: "liquidity", title: "Build project-level liquidity buffer", description: "Reserve cash against delayed interconnection milestones and battery procurement timing.", expectedImpact: "Reduce near-term funding gap risk" },
+    { id: "r-s2", priority: "high", category: "leverage", title: "Refinance construction debt ladder", description: "Extend project debt maturities before additional rate pressure or covenant tightening.", expectedImpact: "Improve interest coverage runway" },
+    { id: "r-s3", priority: "medium", category: "operations", title: "Prioritize projects with signed offtake", description: "Sequence capex toward contracted assets with shorter cash conversion cycles.", expectedImpact: "Improve FCF visibility" },
+  ],
+  alerts: [
+    { id: "al-s1", companyId: "solara-energy", companyName: "Solara Energy Networks", type: "investment_health_drop", severity: "warning", title: "Investment health dropped on cash-flow pressure", description: "Negative FCF and weaker interest coverage reduced the composite mock research score.", date: "2026-06-28", read: false },
+    { id: "al-s2", companyId: "solara-energy", companyName: "Solara Energy Networks", type: "volume_spike", severity: "warning", title: "Volume spike after financing update", description: "Mock volume rose above average after management discussed project refinancing.", date: "2026-06-18", read: false },
+  ],
+  timeline: [
+    { id: "tl-s1", date: "2026-06-18", type: "debt", title: "Project financing update", description: "Management disclosed refinancing workstream for FY2027 construction debt maturities.", impact: "negative" },
+    { id: "tl-s2", date: "2026-05-30", type: "positive", title: "Grid storage contract awarded", description: "Signed 400 MWh storage contract with investment-grade utility counterparty.", impact: "positive" },
+    { id: "tl-s3", date: "2025-12-31", type: "liquidity", title: "FCF remains negative", description: "FY2024 free cash flow of -$732M reflects heavy project build-out.", impact: "negative" },
+  ],
+};
+
+// ─── Company 7: Harbor Foods - Stable Quality Compounder ───────────────────
+const harborPeriods: FinancialPeriod[] = (() => {
+  const raw = [
+    { period: "FY2021", year: 2021, revenue: 4200, grossProfit: 1512, operatingIncome: 546, netIncome: 378, ebitda: 714, totalAssets: 5100, totalLiabilities: 2142, totalEquity: 2958, currentAssets: 1680, currentLiabilities: 980, cash: 520, accountsReceivable: 420, inventory: 520, shortTermDebt: 120, longTermDebt: 980, interestExpense: 48, operatingCashFlow: 610, capex: 190, freeCashFlow: 420, riskScore: 27 },
+    { period: "FY2022", year: 2022, revenue: 4480, grossProfit: 1635, operatingIncome: 605, netIncome: 430, ebitda: 762, totalAssets: 5350, totalLiabilities: 2194, totalEquity: 3156, currentAssets: 1760, currentLiabilities: 1010, cash: 570, accountsReceivable: 442, inventory: 548, shortTermDebt: 110, longTermDebt: 960, interestExpense: 47, operatingCashFlow: 675, capex: 205, freeCashFlow: 470, riskScore: 25 },
+    { period: "FY2023", year: 2023, revenue: 4750, grossProfit: 1758, operatingIncome: 665, netIncome: 480, ebitda: 831, totalAssets: 5680, totalLiabilities: 2243, totalEquity: 3437, currentAssets: 1890, currentLiabilities: 1040, cash: 640, accountsReceivable: 455, inventory: 580, shortTermDebt: 105, longTermDebt: 930, interestExpense: 45, operatingCashFlow: 740, capex: 215, freeCashFlow: 525, riskScore: 23 },
+    { period: "FY2024", year: 2024, revenue: 5030, grossProfit: 1871, operatingIncome: 704, netIncome: 513, ebitda: 880, totalAssets: 5960, totalLiabilities: 2265, totalEquity: 3695, currentAssets: 2020, currentLiabilities: 1060, cash: 710, accountsReceivable: 482, inventory: 602, shortTermDebt: 100, longTermDebt: 900, interestExpense: 43, operatingCashFlow: 805, capex: 230, freeCashFlow: 575, riskScore: 21 },
+  ];
+  return raw.map((r, i) => {
+    const base = { ...r, quarter: undefined };
+    const metrics = calcMetrics(base, i > 0 ? raw[i - 1].revenue : undefined);
+    return { ...base, metrics };
+  });
+})();
+
+export const harborFoods: Company = {
+  id: "harbor-foods",
+  name: "Harbor Foods",
+  ticker: "HRBF",
+  sector: "Consumer Staples",
+  industry: "Packaged Foods",
+  description: "Branded packaged foods company with steady demand, high cash conversion, and conservative leverage across grocery and foodservice channels.",
+  headquarters: "Minneapolis, MN",
+  country: "United States",
+  exchange: "NYSE",
+  employees: 12800,
+  founded: 1968,
+  riskScore: 21,
+  riskTier: "healthy",
+  fraudRisk: "none",
+  confidenceScore: 93,
+  lastUpdated: "2024-12-31",
+  periods: harborPeriods,
+  riskDrivers: [
+    { factor: "Cash Conversion", impact: 0.82, direction: "positive", description: "Operating cash flow exceeded net income in each year and FCF margin expanded to 11%", category: "efficiency" },
+    { factor: "Stable Demand", impact: 0.72, direction: "positive", description: "Revenue grew consistently at 6% with low cyclicality and strong grocery shelf presence", category: "growth" },
+    { factor: "Conservative Leverage", impact: 0.70, direction: "positive", description: "Debt-to-equity fell to 0.27x and interest coverage remains above 16x", category: "leverage" },
+    { factor: "Margin Durability", impact: 0.60, direction: "positive", description: "Gross margin improved despite commodity cost pressure through pricing and mix", category: "profitability" },
+    { factor: "Input Cost Exposure", impact: 0.24, direction: "negative", description: "Agricultural commodity volatility remains a monitoring point for future margins", category: "profitability" },
+  ],
+  fraudSignals: [
+    { id: "fs-h1", name: "Revenue-Cash Flow Alignment", severity: "low", detected: false, description: "Cash conversion supports reported earnings quality.", category: "cashflow" },
+    { id: "fs-h2", name: "Inventory Build Check", severity: "low", detected: false, description: "Inventory growth is in line with revenue and seasonal stocking levels.", category: "receivables" },
+    { id: "fs-h3", name: "Margin Stability", severity: "low", detected: false, description: "Margins are stable with no unexplained step changes.", category: "margin" },
+  ],
+  benchmarkData: {
+    sector: "Consumer Staples",
+    peerGroup: "Packaged Food Companies",
+    metrics: [
+      { name: "Current Ratio", company: 1.91, industryAverage: 1.35, topQuartile: 1.9, peerMedian: 1.25, percentileRank: 76 },
+      { name: "Net Margin", company: 0.102, industryAverage: 0.075, topQuartile: 0.12, peerMedian: 0.07, percentileRank: 72 },
+      { name: "Revenue Growth", company: 0.059, industryAverage: 0.035, topQuartile: 0.07, peerMedian: 0.03, percentileRank: 68 },
+      { name: "Debt-to-Equity", company: 0.27, industryAverage: 0.78, topQuartile: 0.35, peerMedian: 0.7, percentileRank: 83 },
+      { name: "ROE", company: 0.139, industryAverage: 0.12, topQuartile: 0.2, peerMedian: 0.11, percentileRank: 61 },
+      { name: "FCF Margin", company: 0.114, industryAverage: 0.06, topQuartile: 0.1, peerMedian: 0.055, percentileRank: 81 },
+    ],
+  },
+  aiSummary: "Harbor Foods is the stable-quality profile in the mock universe. Revenue growth is modest but durable, free cash flow conversion is strong, leverage is conservative, and fraud screens are clean. The principal monitoring point is input-cost volatility rather than liquidity, leverage, or accounting quality.",
+  recommendations: [
+    { id: "r-h1", priority: "low", category: "operations", title: "Maintain pricing discipline", description: "Use measured pricing and product mix to offset commodity cost volatility without disrupting volume.", expectedImpact: "Protect gross margin above 36%" },
+    { id: "r-h2", priority: "low", category: "risk", title: "Monitor commodity hedging coverage", description: "Track hedge ratios and supplier concentration for wheat, dairy, and packaging inputs.", expectedImpact: "Reduce margin volatility" },
+  ],
+  alerts: [
+    { id: "al-h1", companyId: "harbor-foods", companyName: "Harbor Foods", type: "general", severity: "info", title: "Financial health score improved", description: "Higher cash conversion and lower leverage improved the mock health profile.", date: "2026-06-21", read: true },
+  ],
+  timeline: [
+    { id: "tl-h1", date: "2026-06-21", type: "positive", title: "FCF conversion expands", description: "Free cash flow margin reached 11% in the latest fiscal year.", impact: "positive" },
+    { id: "tl-h2", date: "2026-04-02", type: "neutral", title: "Commodity hedges renewed", description: "Management extended input cost hedges for the next two quarters.", impact: "neutral" },
+    { id: "tl-h3", date: "2025-12-31", type: "positive", title: "Debt reduced", description: "Long-term debt declined for the third consecutive year.", impact: "positive" },
+  ],
+};
+
+// ─── Company 8: Northstar Property Trust - Leveraged Real Estate Watchlist ──
+const northstarPeriods: FinancialPeriod[] = (() => {
+  const raw = [
+    { period: "FY2021", year: 2021, revenue: 2100, grossProfit: 1470, operatingIncome: 735, netIncome: 315, ebitda: 945, totalAssets: 9800, totalLiabilities: 6370, totalEquity: 3430, currentAssets: 780, currentLiabilities: 620, cash: 260, accountsReceivable: 180, inventory: 0, shortTermDebt: 420, longTermDebt: 5100, interestExpense: 260, operatingCashFlow: 620, capex: 740, freeCashFlow: -120, riskScore: 46 },
+    { period: "FY2022", year: 2022, revenue: 2260, grossProfit: 1514, operatingIncome: 701, netIncome: 226, ebitda: 927, totalAssets: 10200, totalLiabilities: 7038, totalEquity: 3162, currentAssets: 760, currentLiabilities: 710, cash: 230, accountsReceivable: 210, inventory: 0, shortTermDebt: 620, longTermDebt: 5580, interestExpense: 320, operatingCashFlow: 560, capex: 780, freeCashFlow: -220, riskScore: 55 },
+    { period: "FY2023", year: 2023, revenue: 2210, grossProfit: 1392, operatingIncome: 575, netIncome: 66, ebitda: 796, totalAssets: 9900, totalLiabilities: 7227, totalEquity: 2673, currentAssets: 680, currentLiabilities: 860, cash: 190, accountsReceivable: 230, inventory: 0, shortTermDebt: 840, longTermDebt: 5480, interestExpense: 410, operatingCashFlow: 470, capex: 690, freeCashFlow: -220, riskScore: 65 },
+    { period: "FY2024", year: 2024, revenue: 2140, grossProfit: 1284, operatingIncome: 449, netIncome: -86, ebitda: 663, totalAssets: 9400, totalLiabilities: 7426, totalEquity: 1974, currentAssets: 610, currentLiabilities: 1040, cash: 150, accountsReceivable: 245, inventory: 0, shortTermDebt: 1120, longTermDebt: 5300, interestExpense: 520, operatingCashFlow: 385, capex: 610, freeCashFlow: -225, riskScore: 73 },
+  ];
+  return raw.map((r, i) => {
+    const base = { ...r, quarter: undefined };
+    const metrics = calcMetrics(base, i > 0 ? raw[i - 1].revenue : undefined);
+    return { ...base, metrics };
+  });
+})();
+
+export const northstarProperties: Company = {
+  id: "northstar-properties",
+  name: "Northstar Property Trust",
+  ticker: "NSPR",
+  sector: "Real Estate",
+  industry: "Office and Mixed-Use REIT",
+  description: "Office-heavy property trust managing a refinancing wall, lower occupancy, and valuation pressure across urban mixed-use assets.",
+  headquarters: "Chicago, IL",
+  country: "United States",
+  exchange: "NYSE",
+  employees: 3100,
+  founded: 2001,
+  riskScore: 73,
+  riskTier: "high",
+  fraudRisk: "medium",
+  confidenceScore: 85,
+  lastUpdated: "2024-12-31",
+  periods: northstarPeriods,
+  riskDrivers: [
+    { factor: "Refinancing Wall", impact: 0.88, direction: "negative", description: "Short-term debt increased to $1.12B while rates and office lending standards tightened", category: "leverage" },
+    { factor: "Occupancy Pressure", impact: 0.76, direction: "negative", description: "Revenue declined as lease expirations and concessions reduced effective rents", category: "growth" },
+    { factor: "Interest Coverage", impact: 0.74, direction: "negative", description: "Operating income no longer covers interest expense, limiting refinancing flexibility", category: "leverage" },
+    { factor: "Asset Value Decline", impact: 0.68, direction: "negative", description: "Total assets and equity declined as cap rates expanded and appraisals weakened", category: "efficiency" },
+    { factor: "Recurring Lease Cash Flow", impact: 0.42, direction: "positive", description: "Operating cash flow remains positive, giving management a restructuring window", category: "liquidity" },
+  ],
+  fraudSignals: [
+    { id: "fs-p1", name: "Debt Maturity Concentration", severity: "high", detected: true, description: "Short-term debt increased materially as refinancing markets tightened.", metric: "Short-term debt", value: 1120, benchmark: 500, category: "debt" },
+    { id: "fs-p2", name: "Cash Flow Coverage Weakness", severity: "medium", detected: true, description: "Operating cash flow remains positive but no longer covers capex and refinancing needs.", metric: "FCF", value: -225, benchmark: 75, category: "cashflow" },
+    { id: "fs-p3", name: "Revenue Recognition Check", severity: "low", detected: false, description: "Revenue decline and receivables trend are consistent with occupancy pressure, not an accounting spike.", category: "revenue" },
+  ],
+  benchmarkData: {
+    sector: "Real Estate",
+    peerGroup: "Office and Mixed-Use REITs",
+    metrics: [
+      { name: "Current Ratio", company: 0.59, industryAverage: 1.0, topQuartile: 1.4, peerMedian: 0.9, percentileRank: 14 },
+      { name: "Net Margin", company: -0.04, industryAverage: 0.12, topQuartile: 0.24, peerMedian: 0.1, percentileRank: 9 },
+      { name: "Revenue Growth", company: -0.032, industryAverage: 0.015, topQuartile: 0.05, peerMedian: 0.01, percentileRank: 18 },
+      { name: "Debt-to-Equity", company: 3.25, industryAverage: 1.6, topQuartile: 0.9, peerMedian: 1.5, percentileRank: 7 },
+      { name: "Interest Coverage", company: 0.86, industryAverage: 2.4, topQuartile: 4.0, peerMedian: 2.1, percentileRank: 10 },
+      { name: "FCF Margin", company: -0.105, industryAverage: 0.04, topQuartile: 0.12, peerMedian: 0.035, percentileRank: 12 },
+    ],
+  },
+  aiSummary: "Northstar Property Trust is a refinancing and asset-quality watchlist case. Office-heavy exposure, falling equity value, weak interest coverage, and a near-term maturity wall create high financial risk. Positive operating cash flow gives the company room to negotiate, but the mock profile requires close monitoring of lender actions, asset sales, and occupancy stabilization.",
+  recommendations: [
+    { id: "r-p1", priority: "high", category: "leverage", title: "Prioritize maturity extension", description: "Negotiate secured extensions or asset-level refinancings for the FY2025 maturity wall.", expectedImpact: "Reduce forced-sale risk" },
+    { id: "r-p2", priority: "high", category: "operations", title: "Accelerate asset sale program", description: "Sell non-core mixed-use assets to improve liquidity and reduce secured debt.", expectedImpact: "Lower debt-to-equity and fund capex backlog" },
+    { id: "r-p3", priority: "medium", category: "risk", title: "Track occupancy and lease rollover", description: "Monitor monthly lease renewals, concessions, and tenant concentration.", expectedImpact: "Improve early-warning visibility" },
+  ],
+  alerts: [
+    { id: "al-p1", companyId: "northstar-properties", companyName: "Northstar Property Trust", type: "price_drawdown", severity: "critical", title: "Price drawdown exceeds 45%", description: "Mock market data shows a steep drawdown tied to refinancing concerns.", date: "2026-06-24", read: false },
+    { id: "al-p2", companyId: "northstar-properties", companyName: "Northstar Property Trust", type: "financial_health_deteriorated", severity: "warning", title: "Financial health deteriorated", description: "Interest coverage, liquidity, and FCF metrics weakened in the latest fiscal year.", date: "2026-06-12", read: false },
+  ],
+  timeline: [
+    { id: "tl-p1", date: "2026-06-24", type: "debt", title: "Refinancing talks extended", description: "Lender group extended negotiations on secured office portfolio debt.", impact: "negative" },
+    { id: "tl-p2", date: "2026-05-12", type: "risk", title: "Asset appraisal revised lower", description: "Independent appraisals reduced office portfolio values after cap-rate expansion.", impact: "negative" },
+    { id: "tl-p3", date: "2025-12-31", type: "liquidity", title: "Current ratio falls below 0.6x", description: "Short-term debt maturities pushed current liabilities above current assets.", impact: "negative" },
+  ],
+};
+
 export const mockCompanies: Company[] = [
   apexTech,
   redstoneRetail,
   novaraBio,
   cascadeMfg,
   meridianHealth,
+  solaraEnergy,
+  harborFoods,
+  northstarProperties,
 ];
 
 export function getCompanyById(id: string): Company | undefined {

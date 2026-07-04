@@ -8,6 +8,9 @@ import {
   Info,
   ArrowRight,
   Clock,
+  BarChart3,
+  Newspaper,
+  Sparkles,
 } from "lucide-react";
 import {
   Card,
@@ -20,18 +23,25 @@ import { RiskBadge } from "@/components/ui/risk-badge";
 import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
 import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
 import {
-  mockCompanies,
-  mockDashboardStats,
   mockRiskTrend,
   allAlerts,
 } from "@/lib/mock";
+import {
+  companyIntelligence,
+  marketIntelligenceUniverse,
+  newsIntelligenceUniverse,
+  portfolioIntelligenceStats,
+} from "@/lib/mock/company-intelligence";
 import type { Alert } from "@/types";
 import { cn } from "@/lib/utils";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { InsightStatCard } from "@/components/ui/insight-stat-card";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatRelativeTime(dateStr: string): string {
-  const now = new Date("2025-02-10");
+  const now = new Date("2026-07-04");
   const date = new Date(dateStr);
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -47,37 +57,30 @@ function formatRevenue(value: number): string {
   return `$${value}M`;
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ElementType;
-  iconColor: string;
-  iconBg: string;
-  valueColor?: string;
+function formatPercent(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, iconColor, iconBg, valueColor }: StatCardProps) {
-  return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="pt-5 pb-5">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-            <p className={cn("text-3xl font-bold tabular-nums tracking-tight", valueColor ?? "text-foreground")}>
-              {value}
-            </p>
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
-          </div>
-          <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", iconBg)}>
-            <Icon className={cn("h-5 w-5", iconColor)} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+function signalTextColor(value: number, inverted = false) {
+  if (inverted) {
+    if (value >= 70) return "text-red-600 dark:text-red-400";
+    if (value >= 50) return "text-orange-600 dark:text-orange-400";
+    return "text-emerald-600 dark:text-emerald-400";
+  }
+  if (value >= 70) return "text-emerald-600 dark:text-emerald-400";
+  if (value >= 50) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
+}
+
+function signalTone(value: number, inverted = false): "good" | "watch" | "bad" {
+  if (inverted) {
+    if (value >= 70) return "bad";
+    if (value >= 50) return "watch";
+    return "good";
+  }
+  if (value >= 70) return "good";
+  if (value >= 50) return "watch";
+  return "bad";
 }
 
 // ─── Alert severity config ────────────────────────────────────────────────────
@@ -145,13 +148,24 @@ function AlertRow({ alert }: { alert: Alert }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const topCompanies = [...mockCompanies]
+  const stats = portfolioIntelligenceStats;
+  const topCompanies = [...companyIntelligence]
     .sort((a, b) => b.riskScore - a.riskScore)
+    .slice(0, 4);
+  const strongestInvestment = [...companyIntelligence]
+    .sort((a, b) => b.investmentHealth.score - a.investmentHealth.score)
     .slice(0, 3);
+  const marketMovers = [...marketIntelligenceUniverse]
+    .sort((a, b) => b.metrics.performance.oneYear - a.metrics.performance.oneYear)
+    .slice(0, 4);
+  const recentNews = newsIntelligenceUniverse
+    .flatMap((item) => item.items.map((news) => ({ ...news, companyName: item.companyName })))
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .slice(0, 4);
 
-  const recentAlerts = allAlerts.slice(0, 5);
+  const recentAlerts = [...allAlerts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
 
-  const today = new Date("2025-02-10").toLocaleDateString("en-US", {
+  const today = new Date("2026-07-04").toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -159,61 +173,66 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-[1400px]">
-      {/* ── Page header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" />
-            Financial risk intelligence as of {today}
-          </p>
-        </div>
+    <DashboardPageShell>
+      <PageHeader
+        eyebrow="Command Center"
+        title="Portfolio Overview"
+        description={`Financial risk, market, news, and investment-health intelligence as of ${today}.`}
+        icon={Activity}
+        actions={
         <Link
           href="/dashboard/companies"
-          className="hidden sm:flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-muted"
         >
           View all companies
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-      </div>
+        }
+      />
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
+      <div className="grid grid-cols-2 xl:grid-cols-6 gap-4">
+        <InsightStatCard
           title="Total Companies"
-          value={String(mockDashboardStats.totalCompanies)}
-          subtitle="Monitored in portfolio"
+          value={String(stats.totalCompanies)}
+          description="Monitored in portfolio"
           icon={Building2}
-          iconColor="text-blue-500"
-          iconBg="bg-blue-500/10"
+          tone="info"
         />
-        <StatCard
-          title="Avg Risk Score"
-          value={mockDashboardStats.averageRiskScore.toFixed(1)}
-          subtitle="Portfolio-weighted average"
+        <InsightStatCard
+          title="Financial Health"
+          value={String(stats.averageFinancialHealthScore)}
+          description="Average score"
+          icon={BarChart3}
+          tone={signalTone(stats.averageFinancialHealthScore)}
+        />
+        <InsightStatCard
+          title="Avg Risk"
+          value={String(stats.averageRiskScore)}
+          description={`${stats.highRiskCount + stats.criticalCount} elevated`}
           icon={TrendingUp}
-          iconColor="text-amber-500"
-          iconBg="bg-amber-500/10"
-          valueColor="text-amber-600 dark:text-amber-400"
+          tone={signalTone(stats.averageRiskScore, true)}
         />
-        <StatCard
-          title="High Risk"
-          value={String(mockDashboardStats.highRiskCount)}
-          subtitle="Companies above score 75"
-          icon={AlertTriangle}
-          iconColor="text-orange-500"
-          iconBg="bg-orange-500/10"
-          valueColor="text-orange-600 dark:text-orange-400"
+        <InsightStatCard
+          title="Investment Health"
+          value={String(stats.averageInvestmentHealthScore)}
+          description="Composite research score"
+          icon={Sparkles}
+          tone="accent"
         />
-        <StatCard
+        <InsightStatCard
+          title="News Risk"
+          value={String(stats.negativeNewsCount)}
+          description="Negative mock events"
+          icon={Newspaper}
+          tone={stats.negativeNewsCount > 5 ? "watch" : "info"}
+        />
+        <InsightStatCard
           title="Fraud Flags"
-          value={String(mockDashboardStats.fraudFlagCount)}
-          subtitle="Active fraud signal alerts"
+          value={String(stats.fraudFlagCount)}
+          description="Companies with detected flags"
           icon={ShieldX}
-          iconColor="text-red-500"
-          iconBg="bg-red-500/10"
-          valueColor="text-red-600 dark:text-red-400"
+          tone="bad"
         />
       </div>
 
@@ -251,7 +270,116 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-1">
-            <RiskDistributionChart data={mockDashboardStats.riskDistribution} />
+            <RiskDistributionChart data={stats.riskDistribution} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="border-b pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Market Momentum</CardTitle>
+                <CardDescription className="mt-0.5">Top 1Y mock price moves</CardDescription>
+              </div>
+              <Link
+                href="/dashboard/market"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                Market <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="divide-y divide-border/60 pt-0">
+            {marketMovers.map((item) => (
+              <div key={item.ticker} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{item.companyName}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{item.ticker}</p>
+                </div>
+                <div className="text-right">
+                  <p className={cn("text-sm font-semibold tabular-nums", signalTextColor(item.marketMomentum.score))}>
+                    {item.marketMomentum.score}
+                  </p>
+                  <p className={cn("text-xs tabular-nums", item.metrics.performance.oneYear >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                    {formatPercent(item.metrics.performance.oneYear)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>News Intelligence</CardTitle>
+                <CardDescription className="mt-0.5">Latest classified company events</CardDescription>
+              </div>
+              <Link
+                href="/dashboard/news"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                News <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="divide-y divide-border/60 pt-0">
+            {recentNews.map((item) => (
+              <div key={item.id} className="py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="line-clamp-1 text-sm font-semibold">{item.title}</p>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
+                      item.sentiment === "positive" && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                      item.sentiment === "negative" && "bg-red-500/10 text-red-600 dark:text-red-400",
+                      item.sentiment === "neutral" && "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {item.sentiment}
+                  </span>
+                </div>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                  {item.companyName}: {item.summary}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b pb-3">
+            <CardTitle>Investment Health Leaders</CardTitle>
+            <CardDescription className="mt-0.5">Composite mock research signal</CardDescription>
+          </CardHeader>
+          <CardContent className="divide-y divide-border/60 pt-0">
+            {strongestInvestment.map((item) => (
+              <div key={item.company.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <Link
+                    href={`/dashboard/company/${item.company.id}`}
+                    className="truncate text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    {item.company.name}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">{item.investmentHealth.label}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-24 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-violet-500"
+                      style={{ width: `${item.investmentHealth.score}%` }}
+                    />
+                  </div>
+                  <span className={cn("w-8 text-right text-sm font-bold tabular-nums", signalTextColor(item.investmentHealth.score))}>
+                    {item.investmentHealth.score}
+                  </span>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -275,18 +403,18 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 divide-y divide-border/60">
-            {topCompanies.map((company) => {
-              const latestPeriod = company.periods[company.periods.length - 1];
+            {topCompanies.map((item) => {
+              const { company, latestPeriod } = item;
               return (
                 <div key={company.id} className="flex items-center gap-4 py-3.5 group">
                   {/* Risk score badge */}
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted/60 font-bold text-sm tabular-nums">
                     <span className={cn(
-                      company.riskScore >= 75 ? "text-red-600 dark:text-red-400" :
-                      company.riskScore >= 50 ? "text-orange-600 dark:text-orange-400" :
+                      item.riskScore >= 75 ? "text-red-600 dark:text-red-400" :
+                      item.riskScore >= 50 ? "text-orange-600 dark:text-orange-400" :
                       "text-amber-600 dark:text-amber-400"
                     )}>
-                      {company.riskScore}
+                      {item.riskScore}
                     </span>
                   </div>
 
@@ -305,7 +433,12 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Risk badge */}
-                  <RiskBadge tier={company.riskTier} size="sm" />
+                  <div className="hidden md:flex flex-col items-end gap-1">
+                    <RiskBadge tier={company.riskTier} size="sm" />
+                    <span className="text-[11px] text-muted-foreground">
+                      IH {item.investmentHealth.score} · {item.negativeNewsCount} neg news
+                    </span>
+                  </div>
 
                   {/* Revenue */}
                   <div className="hidden sm:block text-right">
@@ -349,6 +482,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

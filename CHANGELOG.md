@@ -4,6 +4,16 @@
 
 ### Added
 
+- Added `UI_UX_REDESIGN_PLAN.md` and `DESIGN_SYSTEM.md` to guide the dashboard redesign and document reusable UI rules.
+- Added shared dashboard UI components: `DashboardPageShell`, `PageHeader`, `SectionHeader`, `InsightStatCard`, `SignalBadge`, and `ErrorState`.
+- Added dashboard route-level loading and error states.
+- Added `UI_COMPLETION_PLAN.md` to track the mock UI completion sprint.
+- Added three mock company profiles: Solara Energy Networks, Harbor Foods, and Northstar Property Trust.
+- Added country and exchange metadata to company profiles.
+- Added shared enriched company intelligence under `lib/mock/company-intelligence.ts`.
+- Added `GET /api/companies` and `GET /api/companies/[id]`.
+- Added standalone `/dashboard/market` and `/dashboard/news` pages.
+- Added richer dashboard overview, company universe table, compare intelligence summary, simulator health/investment deltas, Copilot context, report builder, upload mock parser, settings preferences, and expanded alert taxonomy.
 - Added roadmap, feature tracker, architecture, model strategy, changelog, and TODO documentation.
 - Added deterministic risk scoring, classification, breakdown, driver, recommendation, fraud signal, and scenario helper modules under `lib/risk`.
 - Added mock AI Risk Analyst abstraction and prompt builder under `lib/ai`.
@@ -31,6 +41,13 @@
 
 ### Changed
 
+- Redesigned the dashboard shell with grouped navigation, a mobile drawer, improved top navigation, shared page spacing, and subtle route transitions.
+- Normalized dashboard page headers across overview, companies, company detail, market, news, compare, simulator, reports, alerts, upload, and settings.
+- Updated the company universe with responsive mobile cards and a cleaner filter/stat summary.
+- Updated the company detail header with a compact score strip for risk, financial health, investment health, market momentum, and news sentiment.
+- Improved Market Intelligence and News Intelligence pages with shared KPI cards and empty states.
+- Improved Copilot responsiveness by hiding the desktop conversation rail on small screens and adding a mobile company selector.
+- Tightened upload and settings copy so mock-only local behavior is explicit.
 - Reframed project documentation around the intended hybrid architecture: deterministic/model-based scores first, accounting rules second, AI explanation layer third.
 - Updated company detail and copilot surfaces to use reusable AI analyst output for model-backed summaries.
 - Updated AI analyst output to reference financial health, market momentum, news sentiment, investment health, and recent events when available.
