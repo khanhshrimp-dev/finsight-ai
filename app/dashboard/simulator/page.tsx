@@ -18,6 +18,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PremiumPanel } from "@/components/ui/premium-panel";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+} from "@/components/ui/premium-dashboard";
 import {
   Select,
   SelectContent,
@@ -69,6 +75,34 @@ const metricControls: MetricControlConfig[] = [
   { key: "roe", min: -2, max: 1.5, step: 0.01, format: "percent" },
   { key: "operatingCashFlowRatio", min: -0.5, max: 2, step: 0.05, format: "ratio" },
   { key: "revenueGrowth", min: -0.5, max: 1.2, step: 0.01, format: "percent" },
+];
+
+const metricControlGroups: Array<{ title: string; description: string; keys: ScenarioMetricKey[] }> = [
+  {
+    title: "Liquidity",
+    description: "Stress short-term coverage and liquid asset cushion.",
+    keys: ["currentRatio", "quickRatio"],
+  },
+  {
+    title: "Leverage",
+    description: "Change debt load and interest-service capacity.",
+    keys: ["debtToEquity", "interestCoverage"],
+  },
+  {
+    title: "Profitability",
+    description: "Model margin, asset-return, and equity-return pressure.",
+    keys: ["grossMargin", "netMargin", "roa", "roe"],
+  },
+  {
+    title: "Cash flow",
+    description: "Move operating cash generation relative to obligations.",
+    keys: ["operatingCashFlowRatio"],
+  },
+  {
+    title: "Growth",
+    description: "Adjust revenue momentum without changing original data.",
+    keys: ["revenueGrowth"],
+  },
 ];
 
 function latestMetrics(companyId: string): FinancialMetrics {
@@ -244,17 +278,22 @@ export default function ScenarioSimulatorPage() {
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.55fr)]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Before vs After</CardTitle>
-              <CardDescription>
+      <DemoDataNotice
+        icon={SlidersHorizontal}
+        title="Stress-test assumptions without changing original company data"
+        description="Scenario inputs live in local UI state only. The original mock company record is not edited, persisted, or sent to a real model service."
+      />
+
+      <div className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(320px,0.95fr)_minmax(0,1.55fr)]">
+        <div className="space-y-6 xl:order-2">
+          <PremiumPanel className="p-5">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold">Before vs After</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Deterministic score based on liquidity, leverage, profitability, cash flow, and growth.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              </p>
+            </div>
+              <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
                 <div className="text-center">
                   <RiskScoreGauge score={result.baseScore} size="lg" />
                   <p className="mt-2 text-sm font-medium">Original</p>
@@ -262,7 +301,7 @@ export default function ScenarioSimulatorPage() {
                     {result.baseLabel}
                   </Badge>
                 </div>
-                <div className={cn("flex flex-col items-center gap-1 font-semibold", scoreDeltaClass(result.delta))}>
+                <div className={cn("flex items-center justify-center gap-2 font-semibold sm:flex-col sm:gap-1", scoreDeltaClass(result.delta))}>
                   <ScoreDeltaIcon delta={result.delta} />
                   <span className="font-mono text-sm">
                     {result.delta >= 0 ? "+" : ""}
@@ -294,7 +333,7 @@ export default function ScenarioSimulatorPage() {
                         : "bg-emerald-500",
                   },
                 ].map((item) => (
-                  <div key={item.label} className="grid grid-cols-[76px_1fr_34px] items-center gap-3 text-xs">
+                  <div key={item.label} className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)_34px] items-center gap-3 text-xs">
                     <span className="text-muted-foreground">{item.label}</span>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
                       <div className={cn("h-full rounded-full", item.color)} style={{ width: `${item.value}%` }} />
@@ -305,50 +344,23 @@ export default function ScenarioSimulatorPage() {
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border bg-muted/25 p-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Financial Health
-                  </p>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Original</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">{baseFinancialHealth}</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Scenario</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">
-                      {scenarioFinancialHealth}
-                    </span>
-                  </div>
-                  <p className={cn("mt-2 text-xs font-semibold", scoreDeltaClass(baseFinancialHealth - scenarioFinancialHealth))}>
-                    {scenarioFinancialHealth - baseFinancialHealth >= 0 ? "+" : ""}
-                    {scenarioFinancialHealth - baseFinancialHealth} health pts
-                  </p>
-                </div>
+                <MetricDeltaCard
+                  label="Financial Health"
+                  value={`${scenarioFinancialHealth}/100`}
+                  delta={`${scenarioFinancialHealth - baseFinancialHealth >= 0 ? "+" : ""}${scenarioFinancialHealth - baseFinancialHealth} pts`}
+                  detail={`Original ${baseFinancialHealth}/100`}
+                  tone={scenarioFinancialHealth - baseFinancialHealth >= 0 ? "good" : "bad"}
+                />
 
-                <div className="rounded-lg border bg-muted/25 p-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Investment Health
-                  </p>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Original</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">
-                      {selectedIntelligence.investmentHealth.score}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Scenario</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">
-                      {scenarioInvestmentHealth.score}
-                    </span>
-                  </div>
-                  <p className={cn("mt-2 text-xs font-semibold", investmentHealthDelta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
-                    {investmentHealthDelta >= 0 ? "+" : ""}
-                    {investmentHealthDelta} investment pts
-                  </p>
-                </div>
+                <MetricDeltaCard
+                  label="Investment Health"
+                  value={`${scenarioInvestmentHealth.score}/100`}
+                  delta={`${investmentHealthDelta >= 0 ? "+" : ""}${investmentHealthDelta} pts`}
+                  detail={`Original ${selectedIntelligence.investmentHealth.score}/100`}
+                  tone={investmentHealthDelta >= 0 ? "good" : "bad"}
+                />
               </div>
-            </CardContent>
-          </Card>
+          </PremiumPanel>
 
           <Card>
             <CardHeader>
@@ -407,59 +419,77 @@ export default function ScenarioSimulatorPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Assumptions</CardTitle>
-              <CardDescription>
-                Original values are shown beside editable scenario values.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 lg:grid-cols-2">
-                {metricControls.map((control) => {
-                  const baseValue = Number(baseMetrics[control.key] ?? 0);
-                  const currentValue = Number(scenarioMetrics[control.key] ?? 0);
+        <div className="space-y-6 xl:order-1">
+          <PremiumPanel className="p-5">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold">Financial assumptions</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Original values are shown beside editable scenario values. Changed assumptions are highlighted.
+              </p>
+            </div>
+            <div className="space-y-5">
+              {metricControlGroups.map((group) => (
+                <section key={group.title} className="rounded-lg border border-border/70 bg-background/70 p-4">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold">{group.title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{group.description}</p>
+                  </div>
+                  <div className="grid gap-4">
+                    {group.keys.map((key) => {
+                      const control = metricControls.find((item) => item.key === key);
+                      if (!control) return null;
+                      const baseValue = Number(baseMetrics[control.key] ?? 0);
+                      const currentValue = Number(scenarioMetrics[control.key] ?? 0);
+                      const changed = Math.abs(currentValue - baseValue) > 0.0001;
 
-                  return (
-                    <div key={control.key} className="rounded-lg border bg-card p-3">
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium">{scenarioMetricLabels[control.key]}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Original: {formatValue(baseValue, control.format)}
-                          </p>
+                      return (
+                        <div
+                          key={control.key}
+                          className={cn(
+                            "rounded-lg border p-3 transition-colors",
+                            changed ? "border-primary/35 bg-primary/10" : "border-border/70 bg-card/80"
+                          )}
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-medium">{scenarioMetricLabels[control.key]}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Original: {formatValue(baseValue, control.format)}
+                              </p>
+                            </div>
+                            <Input
+                              type="number"
+                              value={currentValue}
+                              min={control.min}
+                              max={control.max}
+                              step={control.step}
+                              onChange={(event) => updateMetric(control.key, Number(event.target.value))}
+                              className="w-24 text-right font-mono"
+                              aria-label={`${scenarioMetricLabels[control.key]} scenario value`}
+                            />
+                          </div>
+                          <input
+                            type="range"
+                            min={control.min}
+                            max={control.max}
+                            step={control.step}
+                            value={currentValue}
+                            onChange={(event) => updateMetric(control.key, Number(event.target.value))}
+                            className="w-full accent-primary"
+                            aria-label={scenarioMetricLabels[control.key]}
+                          />
+                          <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                            <span>{formatValue(control.min, control.format)}</span>
+                            <span>{formatValue(control.max, control.format)}</span>
+                          </div>
                         </div>
-                        <Input
-                          type="number"
-                          value={currentValue}
-                          min={control.min}
-                          max={control.max}
-                          step={control.step}
-                          onChange={(event) => updateMetric(control.key, Number(event.target.value))}
-                          className="w-24 text-right font-mono"
-                        />
-                      </div>
-                      <input
-                        type="range"
-                        min={control.min}
-                        max={control.max}
-                        step={control.step}
-                        value={currentValue}
-                        onChange={(event) => updateMetric(control.key, Number(event.target.value))}
-                        className="w-full accent-primary"
-                        aria-label={scenarioMetricLabels[control.key]}
-                      />
-                      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                        <span>{formatValue(control.min, control.format)}</span>
-                        <span>{formatValue(control.max, control.format)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </PremiumPanel>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
@@ -500,24 +530,18 @@ export default function ScenarioSimulatorPage() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Deterministic Explanation</CardTitle>
-              <CardDescription>Transparent scenario interpretation before any LLM provider is connected.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed text-foreground">{result.explanation}</p>
-              <div className="mt-4 rounded-lg border bg-muted/25 p-3">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                  <BrainCircuit className="h-4 w-4 text-primary" />
-                  AI-ready analyst placeholder
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {analyst.executiveSummary}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <AnalystMemoCard
+            icon={BrainCircuit}
+            eyebrow="Scenario explanation"
+            title="AI-style interpretation for review"
+            summary={analyst.executiveSummary}
+            bullets={[
+              result.explanation,
+              `Most sensitive metric: ${result.mostSensitiveMetric.label}`,
+              `Scenario risk moved ${result.delta >= 0 ? "+" : ""}${result.delta} points from original.`,
+            ]}
+            disclaimer="Transparent deterministic scenario output only. No live model, LLM provider, or persisted company data change is used."
+          />
         </div>
       </div>
     </DashboardPageShell>

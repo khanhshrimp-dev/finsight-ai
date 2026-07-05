@@ -16,7 +16,7 @@ Scope: finish a polished, mock-only product UI for FinSight AI. This sprint must
 
 | Route | Sprint Target | Status Before Sprint | Completion Notes |
 | --- | --- | --- | --- |
-| `/` | Product-aware landing page with honest mock-data positioning | Partial | Keep aligned with current feature set and limitations. |
+| `/` | Product-aware landing page with honest mock-data positioning | Partial | Premium landing pass completed on 2026-07-05 with command-center preview and responsible-use disclaimer. |
 | `/login` | Polished auth mock UI | Mock Only | No real auth in this sprint. |
 | `/signup` | Polished auth mock UI | Mock Only | No real auth in this sprint. |
 | `/dashboard` | Portfolio command center with KPIs, charts, alerts, news, market, and report shortcuts | Partial | Needs broader intelligence summary. |

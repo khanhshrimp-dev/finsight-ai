@@ -12,6 +12,8 @@ import {
   RefreshCw,
   ShieldAlert,
   Sparkles,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PremiumPanel } from "@/components/ui/premium-panel";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+} from "@/components/ui/premium-dashboard";
 import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
 import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
 import { mockRiskTrend } from "@/lib/mock";
@@ -41,6 +49,8 @@ interface ReportTemplate {
   title: string;
   description: string;
   icon: typeof FileText;
+  bestUseCase: string;
+  estimatedOutput: string;
   sections: string[];
 }
 
@@ -50,6 +60,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "Company Snapshot",
     description: "One-page company profile with financials, risk, market, news, and alerts.",
     icon: FileText,
+    bestUseCase: "Board or IC prep when an analyst needs a fast company view.",
+    estimatedOutput: "4-page memo preview",
     sections: ["Business profile", "Latest financials", "Key risks", "Recent alerts"],
   },
   {
@@ -57,6 +69,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "Financial Health Report",
     description: "Detailed liquidity, leverage, profitability, cash-flow, and growth review.",
     icon: BarChart3,
+    bestUseCase: "Credit, audit, or diligence review focused on accounting fundamentals.",
+    estimatedOutput: "6-page health review",
     sections: ["Financial health score", "Ratio trend", "Benchmark context", "Watch items"],
   },
   {
@@ -64,6 +78,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "Risk Assessment Memo",
     description: "Deterministic risk score, drivers, fraud screens, and monitoring actions.",
     icon: ShieldAlert,
+    bestUseCase: "Risk committee review where drivers and required follow-up matter.",
+    estimatedOutput: "7-page risk memo",
     sections: ["Risk score", "Top drivers", "Fraud signals", "Recommended reviews"],
   },
   {
@@ -71,6 +87,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "Investment Health Brief",
     description: "Composite research signal across financial, risk, market, news, and valuation placeholder inputs.",
     icon: Sparkles,
+    bestUseCase: "Portfolio monitoring where mixed financial, market, and news signals need synthesis.",
+    estimatedOutput: "5-page research brief",
     sections: ["Composite score", "Component weights", "Drivers", "Research limitations"],
   },
   {
@@ -78,6 +96,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "News & Market Intelligence Report",
     description: "Mock price momentum, volume, volatility, news sentiment, severity, and event timeline.",
     icon: Newspaper,
+    bestUseCase: "Market/news refresh before a company memo or watchlist meeting.",
+    estimatedOutput: "6-page intelligence report",
     sections: ["Market momentum", "News sentiment", "Recent events", "Signal conflicts"],
   },
   {
@@ -85,6 +105,8 @@ const reportTemplates: ReportTemplate[] = [
     title: "Scenario Analysis Report",
     description: "Before/after deterministic risk, health, and investment-health scenario memo.",
     icon: LineChart,
+    bestUseCase: "Stress-case review when assumptions need a traceable before/after memo.",
+    estimatedOutput: "5-page scenario memo",
     sections: ["Scenario assumptions", "Risk delta", "Driver impact", "Management actions"],
   },
 ];
@@ -129,17 +151,6 @@ function formatDate(value: string) {
   });
 }
 
-function scoreColor(score: number, inverted = false) {
-  if (inverted) {
-    if (score >= 70) return "text-red-600 dark:text-red-400";
-    if (score >= 50) return "text-orange-600 dark:text-orange-400";
-    return "text-emerald-600 dark:text-emerald-400";
-  }
-  if (score >= 70) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 50) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
-}
-
 export default function ReportsPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState(companyIntelligence[0].company.id);
   const [selectedReportType, setSelectedReportType] = useState<ReportType>("company_snapshot");
@@ -172,6 +183,16 @@ export default function ReportsPage() {
     `News Sentiment: ${selectedCompany.newsSentimentScore}/100 with ${selectedCompany.negativeNewsCount} negative event(s)`,
     `Alerts: ${selectedCompany.unreadAlertCount} unread of ${selectedCompany.alertCount} total`,
   ];
+  const generatedDate = "July 5, 2026";
+  const keyRisks = selectedCompany.riskAnalysis.drivers
+    .filter((driver) => driver.direction === "increases_risk")
+    .slice(0, 3)
+    .map((driver) => driver.explanation);
+  const keyStrengths = selectedCompany.company.riskDrivers
+    .filter((driver) => driver.direction === "positive")
+    .slice(0, 3)
+    .map((driver) => driver.description);
+  const reviewActions = selectedCompany.riskAnalysis.recommendations.slice(0, 3);
 
   return (
     <DashboardPageShell maxWidth="wide">
@@ -195,47 +216,49 @@ export default function ReportsPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Report Templates</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums">{reportTemplates.length}</p>
-            <p className="text-xs text-muted-foreground">Mock analyst formats</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Generated Reports</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums">{generatedReports.length}</p>
-            <p className="text-xs text-muted-foreground">Local metadata only</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avg Risk</p>
-            <p className={cn("mt-1 text-3xl font-bold tabular-nums", scoreColor(portfolioIntelligenceStats.averageRiskScore, true))}>
-              {portfolioIntelligenceStats.averageRiskScore}
-            </p>
-            <p className="text-xs text-muted-foreground">Portfolio context</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Mock Exports</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums">JSON</p>
-            <p className="text-xs text-muted-foreground">PDF/DOCX not implemented</p>
-          </CardContent>
-        </Card>
+      <DemoDataNotice
+        icon={FileText}
+        title="Mock report generation"
+        description="Reports are professional on-screen previews backed by local demo data. PDF/DOCX generation, persistence, and provider-backed export are intentionally not implemented yet."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <MetricDeltaCard
+          label="Report templates"
+          value={String(reportTemplates.length)}
+          detail="Professional mock deliverable formats"
+          tone="accent"
+        />
+        <MetricDeltaCard
+          label="Generated reports"
+          value={String(generatedReports.length)}
+          detail="Local metadata and preview history"
+          tone="info"
+        />
+        <MetricDeltaCard
+          label="Average risk"
+          value={String(portfolioIntelligenceStats.averageRiskScore)}
+          detail="Portfolio context included in memos"
+          tone={portfolioIntelligenceStats.averageRiskScore >= 60 ? "watch" : "good"}
+        />
+        <MetricDeltaCard
+          label="Mock export"
+          value="JSON"
+          detail="PDF/DOCX belongs to a later reporting phase"
+          tone="watch"
+        />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid gap-6 2xl:grid-cols-[minmax(340px,0.86fr)_minmax(0,1.14fr)]">
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Report Builder</CardTitle>
-              <CardDescription>Select a company and report type for a mock preview.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <PremiumPanel className="p-5">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold">Generate report preview</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Select a company and report format. Output remains an on-screen mock preview.
+              </p>
+            </div>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Company</p>
                 <Select
@@ -271,122 +294,159 @@ export default function ReportsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-                Mock generation returns an on-screen preview and JSON-ready content only. Real PDF/DOCX export belongs to a later reporting phase.
-              </div>
-            </CardContent>
-          </Card>
+              <Button className="w-full gap-2" onClick={handleGenerate} disabled={isGenerating}>
+                <FileText className="h-4 w-4" />
+                {isGenerating ? "Generating preview..." : "Generate mock preview"}
+              </Button>
+            </div>
+          </PremiumPanel>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Available Templates</CardTitle>
-              <CardDescription>Report formats supported by the demo UI.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <div className="grid gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Report type cards</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Each format is framed by purpose, best use case, sections, and estimated output.
+              </p>
+            </div>
               {reportTemplates.map((template) => {
                 const Icon = template.icon;
                 const selected = template.type === selectedReportType;
                 return (
                   <button
                     key={template.type}
+                    type="button"
                     onClick={() => setSelectedReportType(template.type)}
                     className={cn(
-                      "w-full rounded-lg border p-3 text-left transition-colors",
-                      selected ? "border-primary/40 bg-primary/5" : "hover:bg-muted/30"
+                      "w-full rounded-lg border p-4 text-left transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      selected ? "border-primary/40 bg-primary/10 shadow-sm" : "border-border/70 bg-card/70 hover:border-primary/30"
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{template.title}</p>
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                          {template.description}
-                        </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold">{template.title}</p>
+                          {selected && <Badge variant="secondary">Selected</Badge>}
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{template.description}</p>
+                        <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                          <p><span className="font-medium text-foreground">Best use:</span> {template.bestUseCase}</p>
+                          <p><span className="font-medium text-foreground">Output:</span> {template.estimatedOutput}</p>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {template.sections.slice(0, 3).map((section) => (
+                            <Badge key={section} variant="outline" className="text-[10px]">
+                              {section}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </button>
                 );
               })}
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader className="border-b">
+          <PremiumPanel className="p-0">
+            <div className="border-b border-border/70 px-5 py-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle>{selectedTemplate.title} Preview</CardTitle>
-                  <CardDescription>
-                    {selectedCompany.company.name} · {selectedCompany.company.ticker} · {selectedCompany.company.exchange}
-                  </CardDescription>
+                  <Badge variant="outline" className="mb-2">Memo preview</Badge>
+                  <h2 className="text-xl font-semibold tracking-tight">{selectedTemplate.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selectedCompany.company.name} · {selectedCompany.company.ticker} · Generated {generatedDate}
+                  </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm">
                     <Eye className="h-4 w-4" />
                     Preview
                   </Button>
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4" />
-                    JSON
+                    Mock JSON
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-5">
+            </div>
+            <div className="space-y-5 p-5">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Financial Health</p>
-                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.financialHealthScore))}>
-                    {selectedCompany.financialHealthScore}
-                  </p>
+                <MetricDeltaCard label="Financial Health" value={`${selectedCompany.financialHealthScore}/100`} detail="Latest mock score" tone={selectedCompany.financialHealthScore >= 70 ? "good" : "watch"} />
+                <MetricDeltaCard label="Risk Score" value={`${selectedCompany.riskScore}/100`} detail={selectedCompany.riskLabel} tone={selectedCompany.riskScore >= 70 ? "bad" : selectedCompany.riskScore >= 50 ? "watch" : "good"} />
+                <MetricDeltaCard label="Investment Health" value={`${selectedCompany.investmentHealth.score}/100`} detail={selectedCompany.investmentHealth.label} tone="accent" />
+              </div>
+
+              <div className="rounded-lg border bg-background/70 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold">Executive summary</p>
                 </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Risk Score</p>
-                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.riskScore, true))}>
-                    {selectedCompany.riskScore}
-                  </p>
+                <p className="text-sm leading-6 text-muted-foreground">{selectedCompany.company.aiSummary}</p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-lg border bg-background/70 p-4">
+                  <p className="mb-3 text-sm font-semibold">Key risks</p>
+                  <div className="space-y-2">
+                    {(keyRisks.length > 0 ? keyRisks : previewBullets.slice(0, 3)).map((risk) => (
+                      <div key={risk} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                        <span>{risk}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Investment Health</p>
-                  <p className={cn("text-2xl font-bold tabular-nums", scoreColor(selectedCompany.investmentHealth.score))}>
-                    {selectedCompany.investmentHealth.score}
-                  </p>
+                <div className="rounded-lg border bg-background/70 p-4">
+                  <p className="mb-3 text-sm font-semibold">Key strengths</p>
+                  <div className="space-y-2">
+                    {(keyStrengths.length > 0 ? keyStrengths : selectedCompany.summarySignals.slice(0, 3).map((signal) => `${signal.label}: ${signal.value}`)).map((strength) => (
+                      <div key={strength} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        <span>{strength}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-semibold">Included Sections</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTemplate.sections.map((section) => (
-                    <Badge key={section} variant="outline">
-                      {section}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-sm font-semibold">Preview Narrative</p>
-                <div className="rounded-lg border bg-muted/25 p-4 text-sm leading-relaxed text-muted-foreground">
-                  {selectedCompany.company.aiSummary}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-sm font-semibold">Preview Signals</p>
+                <p className="mb-2 text-sm font-semibold">Recommended review actions</p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {previewBullets.map((item) => (
-                    <div key={item} className="rounded-lg border p-3 text-sm">
-                      {item}
+                  {reviewActions.map((action) => (
+                    <div key={action} className="rounded-lg border bg-background/70 p-3 text-sm text-muted-foreground">
+                      {action}
                     </div>
                   ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold">Included sections</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTemplate.sections.map((section) => (
+                    <Badge key={section} variant="outline">{section}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-700 dark:text-amber-300">
+                This preview is for research and demonstration purposes only. It is not financial advice, a credit rating, audit opinion, fraud finding, or valuation conclusion.
+              </div>
+            </div>
+          </PremiumPanel>
+
+          <AnalystMemoCard
+            icon={Sparkles}
+            eyebrow="Report drafting logic"
+            title="What the mock generator includes"
+            summary="The preview combines local company fundamentals, deterministic risk output, market momentum, news sentiment, investment health, alerts, and analyst-style language."
+            bullets={previewBullets.slice(0, 4)}
+            disclaimer="Mock export buttons do not create real PDFs or DOCX files."
+          />
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>

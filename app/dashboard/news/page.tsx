@@ -20,6 +20,11 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { InsightStatCard } from "@/components/ui/insight-stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  FilterToolbar,
+} from "@/components/ui/premium-dashboard";
+import {
   companyIntelligence,
   newsIntelligenceUniverse,
 } from "@/lib/mock/company-intelligence";
@@ -34,7 +39,10 @@ const eventTypes: NewsEventType[] = [
   "earnings",
   "guidance",
   "debt",
+  "lawsuit",
+  "regulatory",
   "accounting_issue",
+  "fraud_investigation",
   "management_change",
   "product",
   "restructuring",
@@ -119,6 +127,9 @@ export default function NewsDashboardPage() {
   const watchlistCompanies = newsIntelligenceUniverse
     .filter((entry) => entry.sentiment.score < 45 || entry.sentiment.highSeverityEvents > 0)
     .sort((a, b) => a.sentiment.score - b.sentiment.score);
+  const criticalEvents = filtered
+    .filter((item) => item.severity === "critical" || item.severity === "high")
+    .slice(0, 4);
 
   return (
     <DashboardPageShell maxWidth="wide">
@@ -139,7 +150,13 @@ export default function NewsDashboardPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <DemoDataNotice
+        icon={Newspaper}
+        title="Mock news intelligence"
+        description="News events are local demonstration records classified by sentiment, severity, event type, relevance, and risk impact. No scraping, live feed, provider call, or external article ingestion is used."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <InsightStatCard
           title="Average Sentiment"
           value={averageSentiment}
@@ -170,22 +187,21 @@ export default function NewsDashboardPage() {
         />
       </div>
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <div className="relative min-w-[220px] flex-1 max-w-sm">
+      <FilterToolbar resultCount={`${filtered.length} of ${items.length} items`}>
+          <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search news, company, ticker, sector"
-              className="h-8 pl-8"
+              className="h-10 rounded-xl pl-8"
               aria-label="Search news intelligence"
             />
           </div>
           <select
             value={sentimentFilter}
             onChange={(event) => setSentimentFilter(event.target.value as SentimentFilter)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+            className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
             aria-label="Filter by sentiment"
           >
             <option value="all">All Sentiment</option>
@@ -196,7 +212,7 @@ export default function NewsDashboardPage() {
           <select
             value={severityFilter}
             onChange={(event) => setSeverityFilter(event.target.value as SeverityFilter)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+            className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
             aria-label="Filter by severity"
           >
             <option value="all">All Severity</option>
@@ -208,7 +224,7 @@ export default function NewsDashboardPage() {
           <select
             value={eventFilter}
             onChange={(event) => setEventFilter(event.target.value as EventFilter)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+            className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
             aria-label="Filter by event type"
           >
             <option value="all">All Events</option>
@@ -218,17 +234,13 @@ export default function NewsDashboardPage() {
               </option>
             ))}
           </select>
-          <span className="ml-auto text-xs text-muted-foreground">
-            {filtered.length} of {items.length} items
-          </span>
-        </div>
-      </Card>
+      </FilterToolbar>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
         <Card>
           <CardHeader className="border-b pb-3">
-            <CardTitle>Event Feed</CardTitle>
-            <CardDescription>Classified mock news events with sentiment and risk impact.</CardDescription>
+            <CardTitle>News Timeline</CardTitle>
+            <CardDescription>Classified mock events with sentiment, severity, relevance, and risk impact.</CardDescription>
           </CardHeader>
           <CardContent className="divide-y divide-border/60 p-0">
             {filtered.length === 0 ? (
@@ -248,6 +260,20 @@ export default function NewsDashboardPage() {
                     </div>
                     <h2 className="text-base font-semibold leading-snug">{item.title}</h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      <div className="rounded-lg border bg-background/70 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Relevance</p>
+                        <p className="font-mono text-sm font-semibold">{item.relevanceScore}/100</p>
+                      </div>
+                      <div className="rounded-lg border bg-background/70 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk impact</p>
+                        <p className="text-sm font-semibold capitalize">{item.riskImpact}</p>
+                      </div>
+                      <div className="rounded-lg border bg-background/70 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Confidence</p>
+                        <p className="font-mono text-sm font-semibold">{item.confidenceScore}/100</p>
+                      </div>
+                    </div>
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <Link
                         href={`/dashboard/company/${item.companyId}`}
@@ -278,6 +304,48 @@ export default function NewsDashboardPage() {
         </Card>
 
         <div className="space-y-4">
+          <AnalystMemoCard
+            icon={Sparkles}
+            eyebrow="What this means"
+            title="Event risk summary"
+            summary={`The mock news universe currently contains ${negativeCount} negative events and ${highSeverityCount} high-severity items. Event intelligence should be read as context around the financial model, not as an independent recommendation.`}
+            bullets={[
+              "Accounting, regulatory, litigation, debt, and management events require review when severity is high.",
+              "Sentiment combines event type, recency, severity, relevance, and confidence.",
+              "News can explain score movement, but it does not replace financial-model review.",
+            ]}
+            disclaimer="Research and demonstration purposes only. No live news provider or scraping is used."
+          />
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Critical Events</CardTitle>
+              <CardDescription>High-severity items requiring analyst review.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {criticalEvents.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  No high-severity events match the current filters.
+                </div>
+              ) : (
+                criticalEvents.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/dashboard/company/${item.companyId}`}
+                    className="block rounded-lg border p-3 transition-colors hover:bg-muted/30"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <Badge className={severityClass(item.severity)}>{item.severity}</Badge>
+                      <Badge variant="outline">{item.eventType.replaceAll("_", " ")}</Badge>
+                    </div>
+                    <p className="text-sm font-semibold leading-snug">{item.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.companyName} · {formatDate(item.publishedAt)}</p>
+                  </Link>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>News Watchlist</CardTitle>

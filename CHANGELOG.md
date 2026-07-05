@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-07-05
+
+### Added
+
+- Added `PREMIUM_UI_REDESIGN_PLAN.md`, `LANDING_PAGE_STRATEGY.md`, and `DASHBOARD_UX_STRATEGY.md`.
+- Added premium landing/product primitives: `MotionReveal`, `PremiumPanel`, `BentoCard`, and `FloatingMetric`.
+- Added premium dashboard primitives: `DemoDataNotice`, `CommandCard`, `MetricDeltaCard`, `AnalystMemoCard`, `FilterToolbar`, and `SplitWorkspaceLayout`.
+- Added global premium background, reveal, and reduced-motion utilities.
+- Added `VISUAL_QA_CHECKLIST.md` for route and viewport visual review coverage.
+
+### Changed
+
+- Rebuilt the landing page into a premium product experience with a command-center preview, intelligence-layer story, scenario simulator highlight, AI analyst workspace, responsible-use disclaimer, and dashboard CTAs.
+- Updated root font handling for Tailwind v4 and Next.js font variables.
+- Tightened dashboard overview KPI hierarchy to five primary command-center signals.
+- Refined dashboard sidebar grouping labels.
+- Updated company detail hero with mock price context and primary Copilot, Simulator, and Report actions.
+- Redesigned `/dashboard/copilot` as a split mock analyst workspace with prompt categories, chat output, active context, and explicit AI boundaries.
+- Redesigned `/dashboard/reports` with report templates, best-use cases, consulting-style memo preview, and mock export framing.
+- Redesigned `/dashboard/simulator` with grouped assumption controls, before/after score cards, and deterministic scenario explanation.
+- Redesigned `/dashboard/compare` with optional peer selectors, score summaries, and a direct analyst comparison answer.
+- Redesigned `/dashboard/market` with focused ticker analysis, 52-week range visualization, top movers, and market interpretation.
+- Redesigned `/dashboard/news` with event-intelligence filters, richer timeline cards, critical-events panel, and impact memo.
+- Redesigned `/dashboard/alerts` with command metrics, category tabs, clearer rule/watchlist framing, and analyst guidance.
+- Redesigned `/dashboard/upload` with mock intake framing, validation metrics, premium drop zone, parser preview, and ingestion guidance.
+- Redesigned `/dashboard/settings` with settings coverage cards, mock provider boundaries, disabled placeholder-only controls, and governance memo.
+- Updated README, roadmap, feature tracker, design system, and architecture documentation for the premium UI pass.
+
+### Validation
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed.
+- Browser smoke passed for `/dashboard/copilot`, `/dashboard/reports`, `/dashboard/simulator`, `/dashboard/compare`, `/dashboard/market`, `/dashboard/news`, `/dashboard/alerts`, `/dashboard/upload`, and `/dashboard/settings` with expected headings and no captured console errors.
+- Responsive browser matrix passed 72 route/viewport checks across 360, 390, 430, 768, 1024, 1280, 1440, and 1920px widths with no detected horizontal overflow or clipped buttons.
+- HTTP route smoke returned 200 for `/dashboard/copilot`, `/dashboard/reports`, `/dashboard/simulator`, `/dashboard/compare`, `/dashboard/market`, `/dashboard/news`, `/dashboard/alerts`, `/dashboard/upload`, and `/dashboard/settings`.
+
 ## 2026-07-04
 
 ### Added

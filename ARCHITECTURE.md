@@ -55,6 +55,7 @@ The application uses the App Router with top-level routes in `app/`.
 - `components/news`: news intelligence presentation components.
 - `components/investment`: investment health presentation components.
 - `components/theme-provider.tsx`: theme integration.
+- Premium landing primitives currently live in `components/ui/motion-reveal.tsx` and `components/ui/premium-panel.tsx`; they are presentation-only and do not add data/provider behavior.
 
 ## Current Mock Data Structure
 

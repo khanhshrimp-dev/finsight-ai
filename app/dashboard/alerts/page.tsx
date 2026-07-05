@@ -22,6 +22,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+} from "@/components/ui/premium-dashboard";
+import { PremiumPanel } from "@/components/ui/premium-panel";
 import { allAlerts, mockCompanies } from "@/lib/mock";
 import { computeMockRiskScore, getRiskTierFromScore, getRiskLabel } from "@/lib/utils/risk";
 import { cn } from "@/lib/utils";
@@ -177,6 +183,7 @@ function ScenarioSlider({ label, value, min, max, step, displayValue, onChange }
 // ─── Tab pill nav ─────────────────────────────────────────────────────────────
 
 type Tab = "alerts" | "watchlist" | "simulator";
+type AlertCategoryFilter = "all" | "critical" | "risk" | "market" | "news" | "financials";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -190,18 +197,31 @@ export default function AlertsPage() {
   const [severityFilter, setSeverityFilter] = useState<"all" | Alert["severity"]>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | Alert["type"]>("all");
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
+  const [categoryFilter, setCategoryFilter] = useState<AlertCategoryFilter>("all");
 
   const unreadCount = useMemo(() => alerts.filter((a) => !a.read).length, [alerts]);
+  const criticalCount = useMemo(() => alerts.filter((a) => a.severity === "critical").length, [alerts]);
+  const marketAlertCount = useMemo(() => alerts.filter((a) => a.type === "price_drawdown" || a.type === "volume_spike").length, [alerts]);
+  const newsAlertCount = useMemo(() => alerts.filter((a) => a.type === "negative_news").length, [alerts]);
+  const financialAlertCount = useMemo(
+    () => alerts.filter((a) => ["liquidity", "debt", "leverage", "financial_health_deteriorated"].includes(a.type)).length,
+    [alerts]
+  );
 
   const filteredAlerts = useMemo(() => {
     return alerts.filter((a) => {
+      if (categoryFilter === "critical" && a.severity !== "critical") return false;
+      if (categoryFilter === "risk" && !["risk_increase", "threshold_breach", "fraud_signal"].includes(a.type)) return false;
+      if (categoryFilter === "market" && !["price_drawdown", "volume_spike"].includes(a.type)) return false;
+      if (categoryFilter === "news" && a.type !== "negative_news") return false;
+      if (categoryFilter === "financials" && !["liquidity", "debt", "leverage", "financial_health_deteriorated", "investment_health_drop"].includes(a.type)) return false;
       if (severityFilter !== "all" && a.severity !== severityFilter) return false;
       if (typeFilter !== "all" && a.type !== typeFilter) return false;
       if (readFilter === "unread" && a.read) return false;
       if (readFilter === "read" && !a.read) return false;
       return true;
     });
-  }, [alerts, severityFilter, typeFilter, readFilter]);
+  }, [alerts, categoryFilter, severityFilter, typeFilter, readFilter]);
 
   const toggleRead = useCallback((id: string) => {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, read: !a.read } : a)));
@@ -300,6 +320,15 @@ export default function AlertsPage() {
     ? "text-red-600 dark:text-red-400"
     : "text-emerald-600 dark:text-emerald-400";
 
+  const alertFilterTabs = [
+    { label: "All", category: "all" as const, count: alerts.length },
+    { label: "Critical", category: "critical" as const, count: criticalCount },
+    { label: "Risk", category: "risk" as const, count: alerts.filter((a) => ["risk_increase", "threshold_breach", "fraud_signal"].includes(a.type)).length },
+    { label: "Market", category: "market" as const, count: marketAlertCount },
+    { label: "News", category: "news" as const, count: newsAlertCount },
+    { label: "Financials", category: "financials" as const, count: financialAlertCount },
+  ];
+
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
@@ -316,6 +345,20 @@ export default function AlertsPage() {
           </span>
         ) : null}
       />
+
+      <DemoDataNotice
+        icon={Bell}
+        title="Mock alert operations"
+        description="Alerts, watchlist edits, read state, and scenario sliders are local UI state only. No notifications are sent and no rules are persisted."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
+        <MetricDeltaCard label="Total alerts" value={String(alerts.length)} detail="Mock monitoring events" tone="info" />
+        <MetricDeltaCard label="Unread" value={String(unreadCount)} detail="Local read state" tone={unreadCount > 0 ? "watch" : "good"} />
+        <MetricDeltaCard label="Critical" value={String(criticalCount)} detail="Highest severity review items" tone={criticalCount > 0 ? "bad" : "good"} />
+        <MetricDeltaCard label="Watchlist" value={String(watchlist.length)} detail="Companies under review" tone="accent" />
+        <MetricDeltaCard label="Mock rules" value="6" detail="Risk, market, news, financials" tone="default" />
+      </div>
 
       {/* ── Tab nav ── */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-0 scrollbar-thin">
@@ -350,14 +393,52 @@ export default function AlertsPage() {
       {/* ══════════════════════════════════════════════════════════ ALERTS TAB */}
       {activeTab === "alerts" && (
         <div className="space-y-4">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {alertFilterTabs.map((item) => (
+              <button
+                key={item.category}
+                type="button"
+                onClick={() => {
+                  setCategoryFilter(item.category);
+                  setSeverityFilter("all");
+                  setTypeFilter("all");
+                }}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  categoryFilter === item.category
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border bg-card/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                )}
+              >
+                {item.label}
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {item.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <AnalystMemoCard
+            icon={Activity}
+            eyebrow="Alert command memo"
+            title="What changed, and why should I care?"
+            summary="Alerts are grouped around financial deterioration, risk movement, market stress, and news event risk. Prioritize unread critical alerts, then review watchlist threshold breaches."
+            bullets={[
+              "Critical items indicate a severe mock monitoring event requiring analyst review.",
+              "Market and news alerts add context; they do not override deterministic financial risk scores.",
+              "Watchlist thresholds are local settings and will reset without persistence.",
+            ]}
+            disclaimer="Mock alert rules only. No external notifications, provider feeds, or persisted watchlist automation are active."
+          />
+
           {/* Filter bar */}
-          <Card>
-            <div className="px-4 py-3 flex flex-wrap items-center gap-3">
+          <PremiumPanel className="p-4">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-[180px_minmax(220px,1fr)_180px_auto_auto] 2xl:items-center">
               {/* Severity */}
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value as typeof severityFilter)}
-                className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+                className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
               >
                 <option value="all">All Severities</option>
                 <option value="critical">Critical</option>
@@ -369,7 +450,7 @@ export default function AlertsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-                className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+                className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
               >
                 <option value="all">All Types</option>
                 <option value="risk_increase">Risk Increase</option>
@@ -390,25 +471,25 @@ export default function AlertsPage() {
               <select
                 value={readFilter}
                 onChange={(e) => setReadFilter(e.target.value as typeof readFilter)}
-                className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+                className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
               >
                 <option value="all">All Alerts</option>
                 <option value="unread">Unread Only</option>
                 <option value="read">Read Only</option>
               </select>
 
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground 2xl:text-right">
                 {filteredAlerts.length} alert{filteredAlerts.length !== 1 ? "s" : ""}
               </span>
 
               {unreadCount > 0 && (
-                <Button size="sm" variant="outline" onClick={markAllAsRead} className="gap-1.5">
+                <Button size="sm" variant="outline" onClick={markAllAsRead} className="h-10 gap-1.5 rounded-xl">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Mark all as read
                 </Button>
               )}
             </div>
-          </Card>
+          </PremiumPanel>
 
           {/* Alert list */}
           {filteredAlerts.length === 0 ? (
@@ -426,6 +507,7 @@ export default function AlertsPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => {
+                      setCategoryFilter("all");
                       setSeverityFilter("all");
                       setTypeFilter("all");
                       setReadFilter("all");
@@ -460,11 +542,11 @@ export default function AlertsPage() {
               <CardTitle>Add to Watchlist</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <select
                   value={watchlistSelectId}
                   onChange={(e) => setWatchlistSelectId(e.target.value)}
-                  className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+                  className="h-10 w-full min-w-0 flex-1 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
                 >
                   <option value="">Select a company to add…</option>
                   {availableToAdd.map((c) => (
@@ -561,9 +643,9 @@ export default function AlertsPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-5">
             {/* Controls */}
-            <div className="lg:col-span-3 space-y-4">
+            <div className="space-y-4 2xl:col-span-3">
               {/* Company selector */}
               <Card>
                 <CardHeader>
@@ -667,7 +749,7 @@ export default function AlertsPage() {
             </div>
 
             {/* Score display */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="space-y-4 2xl:col-span-2">
               {/* Simulated score */}
               <Card className={cn("border", tierBgClass[simulatedTier])}>
                 <CardHeader>

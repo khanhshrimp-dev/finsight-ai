@@ -23,8 +23,8 @@ export function DashboardPageShell({
   return (
     <div
       className={cn(
-        "mx-auto w-full px-4 py-5 sm:px-6 lg:px-8 lg:py-6",
-        "space-y-6 animate-in fade-in-0 slide-in-from-bottom-1 duration-300",
+        "mx-auto w-full min-w-0 px-4 py-5 sm:px-5 md:px-6 xl:px-8 xl:py-7",
+        "space-y-5 sm:space-y-6 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none",
         maxWidthClass[maxWidth],
         className
       )}
@@ -33,3 +33,5 @@ export function DashboardPageShell({
     </div>
   );
 }
+
+export const ResponsivePageShell = DashboardPageShell;

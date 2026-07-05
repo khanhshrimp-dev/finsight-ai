@@ -93,8 +93,25 @@ Validation:
 - `npm run build`: passed.
 - HTTP route smoke against the active dev server returned 200 for the dashboard route set.
 
-Verification limitation:
+Prior verification limitation:
 
-- The in-app Browser client blocked local navigation with `ERR_BLOCKED_BY_CLIENT`.
-- A headless Chrome screenshot fallback was rejected by the environment approval system because usage limits were reached.
-- Visual screenshot QA could not be completed in this run.
+- The 2026-07-04 pass could not complete browser visual QA because local browser access was blocked and the screenshot fallback could not run in that environment.
+- The 2026-07-05 premium follow-up completed in-app browser smoke for the landing and company detail pages.
+
+## 2026-07-05 Premium Follow-Up
+
+Completed:
+
+- Rebuilt the landing page around the current hybrid mock architecture.
+- Added premium landing/product primitives and reduced-motion-aware reveal animation.
+- Tightened dashboard KPI hierarchy and sidebar vocabulary.
+- Added price context and Copilot/Simulator/Report actions to company detail.
+- Updated `PREMIUM_UI_REDESIGN_PLAN.md`, `LANDING_PAGE_STRATEGY.md`, and `DASHBOARD_UX_STRATEGY.md`.
+
+Validation:
+
+- `npm run lint`: passed.
+- `npm run typecheck`: passed.
+- `npm run build`: passed.
+- In-app browser smoke passed for landing and company detail on desktop and 390px mobile.
+- Main route HTTP smoke returned 200 for landing and dashboard routes.

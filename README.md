@@ -8,9 +8,10 @@ The app currently uses mock company, market, and news data. It is suitable as a 
 
 Working today:
 
-- Marketing landing page
+- Premium marketing landing page
+- Premium dashboard route pass for Copilot, Reports, Simulator, Compare, Market, News, Alerts, Upload, and Settings
 - Login/signup UI mockups
-- Dashboard overview
+- Dashboard command-center overview
 - Enriched company list and company detail pages
 - Financial metric cards and charts
 - Risk driver and benchmark visualizations
@@ -30,6 +31,9 @@ Working today:
 - Mock news intelligence module, event scoring, and `GET /api/news/[ticker]`
 - Investment Health Score module and `POST /api/investment/analyze`
 - Shared enriched company intelligence helper and `GET /api/companies`, `GET /api/companies/[id]`
+- Premium landing/product UI primitives for reveal motion, panels, bento cards, and floating metrics
+- Premium dashboard UI primitives for mock notices, metric deltas, analyst memos, filter bars, command cards, and split workspaces
+- Visual QA checklist for the redesigned dashboard routes
 - Typed placeholder route contracts for risk analysis, simulation, market, news, investment analysis, AI risk analysis, and report generation
 
 Still in progress:
@@ -42,7 +46,7 @@ Still in progress:
 - Trained ML models
 - Test coverage for the model and API helper functions
 
-See [ROADMAP.md](./ROADMAP.md), [FEATURE_TRACKER.md](./FEATURE_TRACKER.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [MODEL_STRATEGY.md](./MODEL_STRATEGY.md), [MARKET_DATA_STRATEGY.md](./MARKET_DATA_STRATEGY.md), [NEWS_INTELLIGENCE_STRATEGY.md](./NEWS_INTELLIGENCE_STRATEGY.md), and [INVESTMENT_HEALTH_SCORE.md](./INVESTMENT_HEALTH_SCORE.md).
+See [ROADMAP.md](./ROADMAP.md), [FEATURE_TRACKER.md](./FEATURE_TRACKER.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), [PREMIUM_UI_REDESIGN_PLAN.md](./PREMIUM_UI_REDESIGN_PLAN.md), [LANDING_PAGE_STRATEGY.md](./LANDING_PAGE_STRATEGY.md), [DASHBOARD_UX_STRATEGY.md](./DASHBOARD_UX_STRATEGY.md), [VISUAL_QA_CHECKLIST.md](./VISUAL_QA_CHECKLIST.md), [MODEL_STRATEGY.md](./MODEL_STRATEGY.md), [MARKET_DATA_STRATEGY.md](./MARKET_DATA_STRATEGY.md), [NEWS_INTELLIGENCE_STRATEGY.md](./NEWS_INTELLIGENCE_STRATEGY.md), and [INVESTMENT_HEALTH_SCORE.md](./INVESTMENT_HEALTH_SCORE.md).
 
 ## Tech Stack
 
@@ -102,13 +106,16 @@ npm run typecheck
 npm run build
 ```
 
-Latest validation from this feature pass:
+Latest validation from the 2026-07-05 premium UI pass:
 
 - `npm run lint`: passes.
 - `npm run typecheck`: passes.
 - `npm run build`: passes.
-- HTTP route smoke: `/dashboard`, `/dashboard/companies`, `/dashboard/company/apex-technologies`, `/dashboard/market`, `/dashboard/news`, `/dashboard/compare`, `/dashboard/simulator`, `/dashboard/copilot`, `/dashboard/reports`, `/dashboard/alerts`, `/dashboard/upload`, and `/dashboard/settings` return 200 from the active local dev server.
-- Browser visual smoke was attempted, but the in-app Browser blocked local navigation with `ERR_BLOCKED_BY_CLIENT`, and the headless Chrome screenshot fallback was rejected by the environment approval system because usage limits were reached.
+- Baseline screenshots: `visual-audit/baseline/`.
+- Post-redesign screenshots: `visual-audit/redesign/`.
+- Visual audit: `VISUAL_AUDIT.md`.
+- Responsive QA: `RESPONSIVE_QA.md`.
+- Responsive overflow audit: `node scripts/check-responsive-overflow.mjs http://localhost:3000` passes all audited routes at 390, 768, 1024, and 1440px widths with contained data/table scroll treated as local scroll regions.
 
 ## Mock Data Limitations
 

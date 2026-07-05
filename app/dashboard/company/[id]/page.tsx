@@ -6,13 +6,13 @@ import {
   Calendar,
   Users,
   MapPin,
-  BarChart3,
   Clock,
   Activity,
   Building2,
-  Newspaper,
+  FileText,
   Sparkles,
   LineChart,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { getCompanyById } from "@/lib/mock";
@@ -20,12 +20,21 @@ import { companyIntelligence } from "@/lib/mock/company-intelligence";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { RiskBadge, FraudBadge } from "@/components/ui/risk-badge";
-import { RiskScoreGauge } from "@/components/ui/risk-score-gauge";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { InsightStatCard } from "@/components/ui/insight-stat-card";
+import {
+  CommandPanel,
+  MetricTile,
+  PremiumCard,
+  ResponsiveGrid,
+  ScoreOrb,
+  ScoreStrip,
+  SignalList,
+  SignalPill,
+  StatusBadge,
+} from "@/components/ui/premium-primitives";
+import { cn } from "@/lib/utils";
 
 import { CompanyTabs } from "./company-tabs";
 
@@ -43,6 +52,16 @@ export async function generateMetadata({
     title: `${company.name} (${company.ticker}) — FinSight AI`,
     description: `Financial risk analysis for ${company.name}. Risk score: ${company.riskScore}/100.`,
   };
+}
+
+function formatPrice(value: number | null): string {
+  if (value == null) return "N/A";
+  return `$${value.toFixed(2)}`;
+}
+
+function formatPercent(value: number | null): string {
+  if (value == null) return "N/A";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -144,10 +163,16 @@ export default async function CompanyPage({
                 Ask Copilot
               </Button>
             </Link>
-            <Link href="/dashboard/compare">
+            <Link href="/dashboard/simulator">
               <Button variant="outline" size="sm" className="gap-1.5">
-                <BarChart3 className="h-4 w-4" />
-                Compare
+                <SlidersHorizontal className="h-4 w-4" />
+                Open Simulator
+              </Button>
+            </Link>
+            <Link href="/dashboard/reports">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <FileText className="h-4 w-4" />
+                Generate Report
               </Button>
             </Link>
           </>
@@ -158,6 +183,20 @@ export default async function CompanyPage({
               <Badge variant="outline" className="font-mono text-xs font-bold">
                 {company.ticker}
               </Badge>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium">
+                <LineChart className="h-3 w-3 text-primary" />
+                <span className="tabular-nums">{formatPrice(intelligence?.latestPrice ?? null)}</span>
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    (intelligence?.priceChangePercent ?? 0) >= 0
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-600 dark:text-red-400"
+                  )}
+                >
+                  {formatPercent(intelligence?.priceChangePercent ?? null)}
+                </span>
+              </span>
               <Badge variant="secondary" className="text-xs">
                 {company.sector}
               </Badge>
@@ -190,48 +229,101 @@ export default async function CompanyPage({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-5">
-            <RiskScoreGauge score={company.riskScore} size="lg" />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Risk Score
-              </p>
-              <p className="text-2xl font-semibold tabular-nums">{company.riskScore}/100</p>
-              <p className="text-xs capitalize text-muted-foreground">{company.riskTier} risk tier</p>
+      <PremiumCard glow className="p-4 sm:p-5 lg:p-6">
+        <div className="grid gap-5 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]">
+          <div className="space-y-4">
+            <ScoreOrb
+              label="Risk Score"
+              value={company.riskScore}
+              detail={`${company.riskTier} risk tier · ${company.confidenceScore}% confidence`}
+              tone={scoreTone(company.riskScore, true)}
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <MetricTile
+                label="Mock Price"
+                value={formatPrice(intelligence?.latestPrice ?? null)}
+                detail={`${formatPercent(intelligence?.priceChangePercent ?? null)} latest move`}
+                tone={(intelligence?.priceChangePercent ?? 0) >= 0 ? "good" : "bad"}
+              />
+              <MetricTile
+                label="Coverage"
+                value={company.ticker}
+                detail={`${company.exchange} · ${company.country}`}
+                tone="info"
+              />
             </div>
-          </CardContent>
-        </Card>
-        <InsightStatCard
-          title="Financial Health"
-          value={intelligence?.financialHealthScore ?? Math.max(0, 100 - company.riskScore)}
-          description="Latest mock score"
-          icon={BarChart3}
-          tone={scoreTone(intelligence?.financialHealthScore ?? Math.max(0, 100 - company.riskScore))}
-        />
-        <InsightStatCard
-          title="Investment Health"
-          value={intelligence?.investmentHealth.score ?? "N/A"}
-          description={intelligence?.investmentHealth.label ?? "Composite mock signal"}
+          </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <SignalPill tone="neutral">{company.sector}</SignalPill>
+              <RiskBadge tier={company.riskTier} size="md" />
+              <FraudBadge risk={company.fraudRisk} size="md" />
+              <StatusBadge tone="accent">Research terminal</StatusBadge>
+            </div>
+            <ScoreStrip
+              items={[
+                {
+                  label: "Financial Health",
+                  value: intelligence?.financialHealthScore ?? Math.max(0, 100 - company.riskScore),
+                  detail: "Latest mock score",
+                  tone: scoreTone(intelligence?.financialHealthScore ?? Math.max(0, 100 - company.riskScore)),
+                },
+                {
+                  label: "Investment Health",
+                  value: intelligence?.investmentHealth.score ?? 0,
+                  detail: intelligence?.investmentHealth.label ?? "Composite signal",
+                  tone: intelligence ? scoreTone(intelligence.investmentHealth.score) : "neutral",
+                },
+                {
+                  label: "Market Momentum",
+                  value: intelligence?.marketMomentumScore ?? 0,
+                  detail: "Mock price signal",
+                  tone: intelligence ? scoreTone(intelligence.marketMomentumScore) : "neutral",
+                },
+                {
+                  label: "News Sentiment",
+                  value: intelligence?.newsSentimentScore ?? 0,
+                  detail: `${intelligence?.negativeNewsCount ?? 0} negative event(s)`,
+                  tone: intelligence ? scoreTone(intelligence.newsSentimentScore) : "neutral",
+                },
+                {
+                  label: "Confidence",
+                  value: company.confidenceScore,
+                  detail: "Mock model coverage",
+                  tone: "info",
+                },
+              ]}
+            />
+          </div>
+        </div>
+      </PremiumCard>
+
+      <ResponsiveGrid min="minmax(280px,1fr)">
+        <CommandPanel
+          title="AI analyst memo"
+          description={company.aiSummary}
+          icon={Bot}
+        >
+          <SignalList
+            items={[
+              { title: "Review financial quality", detail: `Current ratio ${m.currentRatio.toFixed(2)}x and net margin ${(m.netMargin * 100).toFixed(1)}% anchor the latest score.` },
+              { title: "Cross-check market/news context", detail: `Market momentum ${intelligence?.marketMomentumScore ?? "N/A"} and news sentiment ${intelligence?.newsSentimentScore ?? "N/A"} remain contextual signals.` },
+            ]}
+          />
+        </CommandPanel>
+        <CommandPanel
+          title="Attention signals"
+          description="Primary watch items before opening the detailed tabs."
           icon={Sparkles}
-          tone={intelligence ? scoreTone(intelligence.investmentHealth.score) : "default"}
-        />
-        <InsightStatCard
-          title="Market Momentum"
-          value={intelligence?.marketMomentumScore ?? "N/A"}
-          description="Mock price signal"
-          icon={LineChart}
-          tone={intelligence ? scoreTone(intelligence.marketMomentumScore) : "default"}
-        />
-        <InsightStatCard
-          title="News Sentiment"
-          value={intelligence?.newsSentimentScore ?? "N/A"}
-          description={`${intelligence?.negativeNewsCount ?? 0} negative event(s)`}
-          icon={Newspaper}
-          tone={intelligence ? scoreTone(intelligence.newsSentimentScore) : "default"}
-        />
-      </div>
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MetricTile label="Revenue" value={`$${latestPeriod.revenue.toLocaleString()}M`} detail={latestPeriod.period} />
+            <MetricTile label="Debt / Equity" value={`${m.debtToEquity.toFixed(2)}x`} detail={debtToEquityStatus} tone={debtToEquityStatus === "bad" ? "bad" : debtToEquityStatus === "warning" ? "watch" : "good"} />
+            <MetricTile label="Interest Coverage" value={`${m.interestCoverage.toFixed(1)}x`} detail={interestCoverageStatus} tone={interestCoverageStatus === "bad" ? "bad" : interestCoverageStatus === "warning" ? "watch" : "good"} />
+            <MetricTile label="News Events" value={String(intelligence?.negativeNewsCount ?? 0)} detail="Negative classified events" tone={(intelligence?.negativeNewsCount ?? 0) > 0 ? "watch" : "good"} />
+          </div>
+        </CommandPanel>
+      </ResponsiveGrid>
 
       <CompanyTabs
         company={company}

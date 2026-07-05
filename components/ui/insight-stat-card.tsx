@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type InsightStatTone = "default" | "good" | "watch" | "bad" | "info" | "accent";
@@ -59,19 +58,19 @@ export function InsightStatCard({
   const toneStyles = toneClass[tone];
 
   return (
-    <Card className={cn("transition-colors hover:bg-card/80", className)}>
-      <CardContent className="pt-5">
+    <div className={cn("relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.024))] p-5 shadow-[0_18px_70px_rgba(0,0,0,0.18)] transition hover:border-primary/30", className)}>
+      <div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {title}
             </p>
-            <p className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", toneStyles.value)}>
+            <p className={cn("mt-2 font-mono text-3xl font-semibold tracking-tight tabular-nums", toneStyles.value)}>
               {value}
             </p>
           </div>
           {Icon && (
-            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", toneStyles.bg)}>
+            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10", toneStyles.bg)}>
               <Icon className={cn("h-5 w-5", toneStyles.icon)} aria-hidden="true" />
             </div>
           )}
@@ -80,13 +79,13 @@ export function InsightStatCard({
           <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             {description && <span>{description}</span>}
             {trend && (
-              <span className="rounded-md border bg-background px-1.5 py-0.5 font-medium text-foreground">
+              <span className="rounded-md border border-white/10 bg-background/70 px-1.5 py-0.5 font-medium text-foreground">
                 {trend}
               </span>
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

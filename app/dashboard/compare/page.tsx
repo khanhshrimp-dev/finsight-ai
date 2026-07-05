@@ -17,6 +17,7 @@ import {
   ArrowRight,
   AlertTriangle,
   Building2,
+  Sparkles,
 } from "lucide-react";
 import { mockCompanies } from "@/lib/mock";
 import {
@@ -32,6 +33,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+} from "@/components/ui/premium-dashboard";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -529,11 +535,23 @@ function IntelligenceComparison({
 export default function ComparePage() {
   const [idA, setIdA] = useState(DEFAULT_A);
   const [idB, setIdB] = useState(DEFAULT_B);
+  const [extraIds, setExtraIds] = useState<string[]>([]);
 
   const companyA = mockCompanies.find((c) => c.id === idA)!;
   const companyB = mockCompanies.find((c) => c.id === idB)!;
   const intelligenceA = companyIntelligence.find((item) => item.company.id === idA)!;
   const intelligenceB = companyIntelligence.find((item) => item.company.id === idB)!;
+  const comparisonSet = useMemo(() => {
+    const ids = [idA, idB, ...extraIds].filter(Boolean);
+    return Array.from(new Set(ids))
+      .map((id) => companyIntelligence.find((item) => item.company.id === id))
+      .filter((item): item is CompanyIntelligence => Boolean(item))
+      .slice(0, 4);
+  }, [extraIds, idA, idB]);
+  const strongestByInvestment = [...comparisonSet].sort(
+    (a, b) => b.investmentHealth.score - a.investmentHealth.score
+  )[0];
+  const lowestRisk = [...comparisonSet].sort((a, b) => a.riskScore - b.riskScore)[0];
 
   // Build radar data
   const radarData = useMemo(() => {
@@ -555,12 +573,18 @@ export default function ComparePage() {
       <PageHeader
         eyebrow="Peer Workbench"
         title="Company Comparison"
-        description="Side-by-side financial, risk, investment, market, news, and price-performance comparison for any two mock companies."
+        description="Compare two core companies in detail, then add up to two more peers for score, market, news, and investment-health context."
         icon={Building2}
       />
 
+        <DemoDataNotice
+          icon={Sparkles}
+          title="Research comparison, not a recommendation"
+          description="The compare page ranks mock research signals across financial health, risk, investment health, market momentum, and news sentiment. It does not produce buy, sell, hold, valuation, or credit conclusions."
+        />
+
         {/* ── Selectors ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-2xl">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
           <CompanySelector
             value={idA}
             onChange={setIdA}
@@ -573,11 +597,40 @@ export default function ComparePage() {
             label="Company B"
             exclude={idA}
           />
+          {[0, 1].map((slot) => (
+            <div key={slot} className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Optional Peer {slot + 3}
+              </p>
+              <select
+                value={extraIds[slot] ?? ""}
+                onChange={(event) => {
+                  const next = [...extraIds];
+                  if (event.target.value) next[slot] = event.target.value;
+                  else next.splice(slot, 1);
+                  setExtraIds(next.filter(Boolean));
+                }}
+                className="h-[46px] w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors hover:bg-muted/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Select optional peer ${slot + 3}`}
+              >
+                <option value="">No peer selected</option>
+                {mockCompanies
+                  .filter((company) => ![idA, idB, ...extraIds.filter((_, index) => index !== slot)].includes(company.id))
+                  .map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          ))}
         </div>
 
         {/* ── Company Headers ────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {[companyA, companyB].map((company, idx) => (
+        <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-4">
+          {comparisonSet.map((item, idx) => {
+            const company = item.company;
+            return (
             <Card
               key={company.id}
               className={cn(
@@ -586,7 +639,7 @@ export default function ComparePage() {
               )}
             >
               <CardContent className="pt-5 pb-5">
-                <div className="flex items-start gap-4">
+                <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
                   <RiskScoreGauge score={company.riskScore} size="lg" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -617,8 +670,34 @@ export default function ComparePage() {
                 </div>
               </CardContent>
             </Card>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+          {comparisonSet.map((item) => (
+            <MetricDeltaCard
+              key={`${item.company.id}-financial-health`}
+              label={item.company.ticker}
+              value={`${item.financialHealthScore}/100`}
+              detail={`Financial health · risk ${item.riskScore}/100 · investment ${item.investmentHealth.score}/100`}
+              tone={item.financialHealthScore >= 70 ? "good" : item.financialHealthScore >= 50 ? "watch" : "bad"}
+            />
           ))}
         </div>
+
+        <AnalystMemoCard
+          icon={Sparkles}
+          eyebrow="Comparison memo"
+          title="Which company looks healthier based on current signals?"
+          summary={`${strongestByInvestment?.company.name ?? companyA.name} has the strongest investment-health signal in the selected mock set, while ${lowestRisk?.company.name ?? companyA.name} has the lowest risk score. Treat this as research triage, not a recommendation.`}
+          bullets={[
+            `Financial Health: compare operating quality and balance-sheet resilience before reading market movement.`,
+            `Risk: lower deterministic risk scores indicate fewer model/rule stress signals in this mock universe.`,
+            `Market/news: momentum and event sentiment provide context, but do not override financial model outputs.`,
+          ]}
+          disclaimer="No buy, sell, hold, valuation, credit, audit, or fraud conclusion is produced by this comparison."
+        />
 
         <IntelligenceComparison companyA={intelligenceA} companyB={intelligenceB} />
 

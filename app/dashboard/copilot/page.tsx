@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bot,
+  BrainCircuit,
   Send,
   Plus,
   Building2,
-  ChevronDown,
   MessageSquare,
   Sparkles,
   ShieldAlert,
@@ -15,13 +15,24 @@ import {
   Activity,
   CheckCircle2,
   AlertCircle,
-  Clock,
   User,
+  FileText,
+  Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { RiskBadge } from "@/components/ui/risk-badge";
+import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { PremiumPanel } from "@/components/ui/premium-panel";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+  SplitWorkspaceLayout,
+} from "@/components/ui/premium-dashboard";
 import { mockCompanies } from "@/lib/mock";
 import { companyIntelligence } from "@/lib/mock/company-intelligence";
 import { analyzeRisk } from "@/lib/risk";
@@ -50,13 +61,6 @@ function formatSessionDate(iso: string): string {
     year: "numeric",
   });
 }
-
-const riskDotColor: Record<string, string> = {
-  healthy: "bg-emerald-500",
-  medium: "bg-amber-500",
-  high: "bg-orange-500",
-  critical: "bg-red-500",
-};
 
 function getAnalystResponse(company: Company, prompt: string): CopilotResponse {
   const intelligence = companyIntelligence.find((item) => item.company.id === company.id);
@@ -440,6 +444,44 @@ const SUGGESTED_PROMPTS = [
   { label: "Generate an audit-style risk memo", icon: CheckCircle2 },
 ];
 
+const PROMPT_GROUPS = [
+  {
+    label: "Financial health",
+    icon: Activity,
+    prompts: ["Summarize financial health", "Explain liquidity and margin pressure"],
+  },
+  {
+    label: "Risk analysis",
+    icon: ShieldAlert,
+    prompts: ["Explain the key risk drivers", "What are the top fraud warning signs?"],
+  },
+  {
+    label: "Market context",
+    icon: TrendingDown,
+    prompts: ["Explain market momentum and price drawdown", "Where does market signal conflict with financials?"],
+  },
+  {
+    label: "News impact",
+    icon: Newspaper,
+    prompts: ["How does recent news affect investment health?", "Which events require review?"],
+  },
+  {
+    label: "Investment health",
+    icon: Sparkles,
+    prompts: ["Break down investment health score", "What weakens the composite research signal?"],
+  },
+  {
+    label: "Scenario explanation",
+    icon: BrainCircuit,
+    prompts: ["Explain a downside scenario", "Which assumption changes move risk most?"],
+  },
+  {
+    label: "Report drafting",
+    icon: FileText,
+    prompts: ["Draft an executive risk memo", "Generate an audit-style risk memo"],
+  },
+];
+
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
 function TypingIndicator() {
@@ -591,10 +633,10 @@ function WelcomeMessage({ onPrompt }: { onPrompt: (p: string) => void }) {
               </span>
             </div>
             <p className="text-sm text-foreground/90 leading-relaxed">
-              I&apos;m your AI-powered financial analysis assistant. I can help you with:
+              I&apos;m your mock AI analyst workspace. I explain financial model and rule outputs; I do not independently create numerical risk scores.
             </p>
           </div>
-          <div className="px-4 py-3 grid grid-cols-2 gap-2">
+          <div className="grid gap-2 px-4 py-3 sm:grid-cols-2">
             {[
               { icon: Activity, label: "Financial health summaries" },
               { icon: ShieldAlert, label: "Fraud signal detection" },
@@ -637,7 +679,6 @@ export default function CopilotPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -645,6 +686,9 @@ export default function CopilotPage() {
   const selectedCompany: Company | undefined = mockCompanies.find(
     (c) => c.id === selectedCompanyId
   );
+  const selectedIntelligence = selectedCompany
+    ? companyIntelligence.find((item) => item.company.id === selectedCompany.id) ?? null
+    : null;
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -727,284 +771,291 @@ export default function CopilotPage() {
   };
 
   return (
-    <div className="flex h-full min-h-[calc(100dvh-3.5rem)] overflow-hidden">
-      {/* ── LEFT PANEL ──────────────────────────────────────────────────── */}
-      <aside className="hidden w-72 shrink-0 flex-col overflow-y-auto border-r border-foreground/8 bg-card/40 lg:flex">
-        {/* Title */}
-        <div className="flex items-center gap-2.5 border-b border-foreground/8 px-4 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-            <Bot className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold leading-none">FinSight Copilot</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">AI financial analyst</p>
-          </div>
-        </div>
+    <DashboardPageShell maxWidth="full" className="space-y-5">
+      <PageHeader
+        eyebrow="AI Analyst Workspace"
+        title="FinSight Copilot"
+        description="Ask structured questions about financial health, risk, market context, news impact, scenario movement, and report drafting."
+        icon={Bot}
+        actions={
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNewConversation}>
+            <Plus className="h-4 w-4" />
+            New conversation
+          </Button>
+        }
+      />
 
-        {/* Company context selector */}
-        <div className="border-b border-foreground/8 px-4 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Company Context
-          </p>
-          <div className="relative">
-            <button
-              onClick={() => setCompanyDropdownOpen((o) => !o)}
-              className={cn(
-                "flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors hover:bg-muted",
-                companyDropdownOpen && "border-ring ring-2 ring-ring/20"
-              )}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {selectedCompany ? (
-                  <>
-                    <span
-                      className={cn(
-                        "h-2 w-2 shrink-0 rounded-full",
-                        riskDotColor[selectedCompany.riskTier]
-                      )}
-                    />
-                    <span className="truncate text-foreground">{selectedCompany.name}</span>
-                  </>
-                ) : (
-                  <>
-                    <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">No company selected</span>
-                  </>
-                )}
+      <DemoDataNotice
+        icon={Sparkles}
+        title="AI explains model and rule outputs"
+        description="Copilot uses local mock analyst responses over deterministic financial, risk, market, news, and investment-health signals. It does not independently create numerical scores or provide financial advice."
+      />
+
+      <SplitWorkspaceLayout
+        left={
+          <>
+            <PremiumPanel className="p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold">Company context</p>
               </div>
-              <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform", companyDropdownOpen && "rotate-180")} />
-            </button>
+              <select
+                value={selectedCompanyId}
+                onChange={(event) => setSelectedCompanyId(event.target.value)}
+                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                aria-label="Select company context"
+              >
+                <option value="">No company selected</option>
+                {mockCompanies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+              {selectedCompany ? (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{selectedCompany.name}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{selectedCompany.ticker}</p>
+                    </div>
+                    <RiskBadge tier={selectedCompany.riskTier} size="sm" />
+                  </div>
+                  <MetricDeltaCard
+                    label="Risk score"
+                    value={`${selectedCompany.riskScore}/100`}
+                    detail={`${selectedCompany.confidenceScore}% confidence in mock profile`}
+                    tone={selectedCompany.riskScore >= 70 ? "bad" : selectedCompany.riskScore >= 50 ? "watch" : "good"}
+                  />
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Select a company to anchor answers to financial, market, news, and investment-health context.
+                </p>
+              )}
+            </PremiumPanel>
 
-            {companyDropdownOpen && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-popover shadow-lg">
-                <button
-                  onClick={() => {
-                    setSelectedCompanyId("");
-                    setCompanyDropdownOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
-                >
-                  <Building2 className="h-3.5 w-3.5" />
-                  No company selected
-                </button>
-                <div className="my-1 h-px bg-border" />
-                {mockCompanies.map((c) => (
+            <PremiumPanel className="p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold">Prompt library</p>
+              </div>
+              <div className="space-y-4">
+                {PROMPT_GROUPS.map((group) => {
+                  const Icon = group.icon;
+                  return (
+                    <div key={group.label}>
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <Icon className="h-3.5 w-3.5" />
+                        {group.label}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {group.prompts.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => sendMessage(prompt)}
+                            className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </PremiumPanel>
+
+            <PremiumPanel className="p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold">Recent analysis prompts</p>
+              </div>
+              <div className="space-y-2">
+                {mockSessions.map((session) => (
                   <button
-                    key={c.id}
-                    onClick={() => {
-                      setSelectedCompanyId(c.id);
-                      setCompanyDropdownOpen(false);
-                    }}
+                    key={session.id}
+                    type="button"
+                    onClick={() => handleLoadSession(session)}
                     className={cn(
-                      "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted",
-                      selectedCompanyId === c.id && "bg-muted"
+                      "w-full rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      activeSessionId === session.id ? "border-primary/40 bg-primary/10" : "border-border/70 bg-background/70"
                     )}
                   >
-                    <span
-                      className={cn("h-2 w-2 shrink-0 rounded-full", riskDotColor[c.riskTier])}
-                    />
-                    <span className="truncate">{c.name}</span>
-                    <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
-                      {c.ticker}
-                    </span>
+                    <p className="truncate text-xs font-medium">{session.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
+                      {session.preview}
+                    </p>
+                    <p className="mt-2 text-[10px] text-muted-foreground">
+                      {formatSessionDate(session.date)}
+                    </p>
                   </button>
                 ))}
               </div>
+            </PremiumPanel>
+          </>
+        }
+        center={
+          <PremiumPanel className="flex min-h-[720px] flex-col overflow-hidden p-0">
+            <div className="flex shrink-0 flex-col gap-3 border-b border-border/70 bg-background/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">
+                    {selectedCompany ? `${selectedCompany.name} analysis` : "General analyst workspace"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Structured response cards with summary, signals, next steps, and disclaimer.
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className="w-fit">
+                Mock AI output
+              </Badge>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-5 scrollbar-thin sm:px-5">
+              <WelcomeMessage onPrompt={(p) => sendMessage(p)} />
+
+              {messages.map((msg) =>
+                msg.role === "user" ? (
+                  <UserMessageBubble key={msg.id} message={msg} />
+                ) : msg.structured ? (
+                  <StructuredResponseCard
+                    key={msg.id}
+                    response={msg.structured}
+                    timestamp={msg.timestamp}
+                  />
+                ) : null
+              )}
+
+              {isLoading && <TypingIndicator />}
+              <div ref={bottomRef} />
+            </div>
+
+            {messages.length === 0 && !isLoading && (
+              <div className="shrink-0 border-t border-border/70 bg-background/50 px-4 py-3 sm:px-5">
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTED_PROMPTS.slice(0, 5).map(({ label, icon: Icon }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => sendMessage(label)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Icon className="h-3 w-3 text-primary" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
 
-          {selectedCompany && (
-            <div className="mt-2 flex items-center gap-2">
-              <RiskBadge tier={selectedCompany.riskTier} size="sm" />
-              <span className="text-[11px] text-muted-foreground">
-                Score: {selectedCompany.riskScore}/100
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* New conversation button */}
-        <div className="px-4 py-3 border-b border-foreground/8">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-2"
-            onClick={handleNewConversation}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New conversation
-          </Button>
-        </div>
-
-        {/* History */}
-        <div className="flex-1 px-4 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Recent Sessions
-          </p>
-          <div className="space-y-1">
-            {mockSessions.map((session) => {
-              const sessionCompany = session.companyId
-                ? mockCompanies.find((c) => c.id === session.companyId)
-                : null;
-              return (
-                <button
-                  key={session.id}
-                  onClick={() => handleLoadSession(session)}
-                  className={cn(
-                    "w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-muted",
-                    activeSessionId === session.id && "bg-muted"
-                  )}
+            <div className="shrink-0 border-t border-border/70 bg-background/80 px-4 py-3 sm:px-5">
+              <div className="flex items-end gap-3">
+                <div className="relative flex-1">
+                  <Textarea
+                    ref={textareaRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={
+                      selectedCompany
+                        ? `Ask about ${selectedCompany.name}...`
+                        : "Ask about financial health, risk signals, market context, or report drafting..."
+                    }
+                    className="max-h-36 min-h-[48px] resize-none py-3 pr-3 text-sm"
+                    rows={1}
+                    disabled={isLoading}
+                    aria-label="Copilot message"
+                  />
+                </div>
+                <Button
+                  onClick={() => sendMessage(inputValue)}
+                  disabled={!inputValue.trim() || isLoading}
+                  size="icon"
+                  className="h-12 w-12 shrink-0 rounded-lg"
+                  aria-label="Send message"
                 >
-                  <div className="flex items-start gap-2">
-                    <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-foreground leading-snug truncate">
-                        {session.title}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                        {session.preview}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        <Clock className="h-3 w-3 text-muted-foreground/60" />
-                        <span className="text-[10px] text-muted-foreground/60">
-                          {formatSessionDate(session.date)}
-                        </span>
-                        {sessionCompany && (
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full ml-auto",
-                              riskDotColor[sessionCompany.riskTier]
-                            )}
-                          />
-                        )}
-                      </div>
-                    </div>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                Press <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">Command</kbd>
+                {" + "}
+                <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">Enter</kbd>
+                {" to send"}
+              </p>
+            </div>
+          </PremiumPanel>
+        }
+        right={
+          selectedCompany && selectedIntelligence ? (
+            <>
+              <PremiumPanel className="p-4">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Active context</p>
+                    <p className="font-mono text-xs text-muted-foreground">{selectedCompany.ticker}</p>
                   </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </aside>
+                  <RiskBadge tier={selectedCompany.riskTier} size="sm" />
+                </div>
+                <div className="grid gap-3">
+                  <MetricDeltaCard
+                    label="Financial Health"
+                    value={`${selectedIntelligence.financialHealthScore}/100`}
+                    detail="Model-owned mock score"
+                    tone={selectedIntelligence.financialHealthScore >= 70 ? "good" : selectedIntelligence.financialHealthScore >= 50 ? "watch" : "bad"}
+                  />
+                  <MetricDeltaCard
+                    label="Investment Health"
+                    value={`${selectedIntelligence.investmentHealth.score}/100`}
+                    detail={selectedIntelligence.investmentHealth.label}
+                    tone="accent"
+                  />
+                  <MetricDeltaCard
+                    label="Market Momentum"
+                    value={`${selectedIntelligence.marketMomentumScore}/100`}
+                    detail="Mock market context"
+                    tone={selectedIntelligence.marketMomentumScore >= 60 ? "good" : selectedIntelligence.marketMomentumScore >= 45 ? "watch" : "bad"}
+                  />
+                  <MetricDeltaCard
+                    label="News Sentiment"
+                    value={`${selectedIntelligence.newsSentimentScore}/100`}
+                    detail={`${selectedIntelligence.negativeNewsCount} negative event(s)`}
+                    tone={selectedIntelligence.newsSentimentScore >= 60 ? "good" : selectedIntelligence.newsSentimentScore >= 45 ? "watch" : "bad"}
+                  />
+                </div>
+              </PremiumPanel>
 
-      {/* ── RIGHT PANEL ─────────────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Chat header */}
-        <div className="flex shrink-0 flex-col gap-3 border-b border-foreground/8 bg-card/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Bot className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold leading-none">
-                {selectedCompany ? selectedCompany.name : "FinSight Copilot"}
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {selectedCompany
-                  ? `${selectedCompany.sector} · ${selectedCompany.ticker}`
-                  : "No company context selected"}
-              </p>
-            </div>
-          </div>
-          <select
-            value={selectedCompanyId}
-            onChange={(event) => setSelectedCompanyId(event.target.value)}
-            className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden"
-            aria-label="Select company context"
-          >
-            <option value="">No company selected</option>
-            {mockCompanies.map((company) => (
-              <option key={company.id} value={company.id}>
-                {company.name}
-              </option>
-            ))}
-          </select>
-          {selectedCompany && (
-            <div className="hidden items-center gap-2 sm:flex">
-              <RiskBadge tier={selectedCompany.riskTier} size="sm" />
-              <span className="text-xs text-muted-foreground">
-                Confidence: {selectedCompany.confidenceScore}%
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Message area */}
-        <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 scrollbar-thin">
-          <WelcomeMessage onPrompt={(p) => sendMessage(p)} />
-
-          {messages.map((msg) =>
-            msg.role === "user" ? (
-              <UserMessageBubble key={msg.id} message={msg} />
-            ) : msg.structured ? (
-              <StructuredResponseCard
-                key={msg.id}
-                response={msg.structured}
-                timestamp={msg.timestamp}
+              <AnalystMemoCard
+                icon={BrainCircuit}
+                eyebrow="Context memo"
+                title="Signals to review"
+                summary={`${selectedCompany.name} combines financial, market, news, and investment-health signals into a mock analyst context for Copilot responses.`}
+                bullets={selectedIntelligence.summarySignals.slice(0, 4).map((signal) => `${signal.label}: ${signal.value}`)}
+                disclaimer="Research and demonstration purposes only. No buy, sell, hold, audit, credit-rating, or fraud conclusion is produced."
               />
-            ) : null
-          )}
-
-          {isLoading && <TypingIndicator />}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Suggested prompts (floating above input when no messages) */}
-        {messages.length === 0 && !isLoading && (
-          <div className="shrink-0 border-t border-foreground/8 bg-background/50 px-5 py-2">
-            <div className="flex flex-wrap gap-1.5">
-              {SUGGESTED_PROMPTS.map(({ label, icon: Icon }) => (
-                <button
-                  key={label}
-                  onClick={() => sendMessage(label)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground/80 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <Icon className="h-3 w-3 text-primary" />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Input area */}
-        <div className="shrink-0 border-t border-foreground/8 bg-background/80 px-5 py-3">
-          <div className="flex items-end gap-3">
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  selectedCompany
-                    ? `Ask about ${selectedCompany.name}...`
-                    : "Ask about financial health, fraud signals, risk analysis..."
-                }
-                className="resize-none min-h-[44px] max-h-36 pr-3 py-2.5 text-sm"
-                rows={1}
-                disabled={isLoading}
-                aria-label="Copilot message"
-              />
-            </div>
-            <Button
-              onClick={() => sendMessage(inputValue)}
-              disabled={!inputValue.trim() || isLoading}
-              size="icon"
-              className="h-[44px] w-[44px] shrink-0 rounded-lg"
-              aria-label="Send message"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground/60 text-center">
-            Press <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">⌘</kbd>
-            {" + "}
-            <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">Enter</kbd>
-            {" to send"}
-          </p>
-        </div>
-      </div>
-    </div>
+            </>
+          ) : (
+            <AnalystMemoCard
+              icon={BrainCircuit}
+              eyebrow="No company selected"
+              title="Use general analyst mode"
+              summary="Copilot can answer general questions, but company-specific score, market, news, and alert context appears after a company is selected."
+              bullets={[
+                "Select a company to ground responses in local mock data.",
+                "Use prompt groups for financial, risk, market, news, scenario, or report tasks.",
+                "Review all generated language before using it in a memo.",
+              ]}
+              disclaimer="All responses are generated from local mock logic for demonstration only."
+            />
+          )
+        }
+      />
+    </DashboardPageShell>
   );
 }

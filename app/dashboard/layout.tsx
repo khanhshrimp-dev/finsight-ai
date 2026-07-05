@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { TopNavbar } from "@/components/dashboard/top-navbar";
+import { PremiumAppShell } from "@/components/dashboard/premium-app-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,14 +13,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,color-mix(in_oklch,var(--primary)_9%,transparent),transparent_34%),var(--background)]">
+    <PremiumAppShell>
       <AppSidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopNavbar />
-        <main className="flex-1 overflow-y-auto scrollbar-thin" id="dashboard-main">
+        <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin" id="dashboard-main">
           {children}
         </main>
       </div>
-    </div>
+    </PremiumAppShell>
   );
 }

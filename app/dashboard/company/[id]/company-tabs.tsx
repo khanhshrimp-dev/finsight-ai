@@ -38,6 +38,14 @@ import { calculateInvestmentHealthScore } from "@/lib/investment";
 import { InvestmentHealthPanel } from "@/components/investment/investment-health-panel";
 import { MarketIntelligenceCard } from "@/components/market/market-intelligence-card";
 import { NewsIntelligenceCard } from "@/components/news/news-intelligence-card";
+import {
+  CommandPanel,
+  MetricTile,
+  PremiumCard,
+  ResponsiveGrid,
+  SignalList,
+  StatusBadge,
+} from "@/components/ui/premium-primitives";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -867,18 +875,18 @@ export function CompanyTabs({
   });
 
   const tabTriggerClass = cn(
-    "relative px-4 py-2.5 text-sm font-medium text-muted-foreground",
-    "transition-colors rounded-lg",
-    "hover:text-foreground hover:bg-muted/60",
-    "data-[state=active]:text-foreground data-[state=active]:bg-background",
-    "data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/60",
+    "relative shrink-0 rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground",
+    "transition-colors",
+    "hover:bg-white/[0.045] hover:text-foreground",
+    "data-[state=active]:bg-primary/15 data-[state=active]:text-primary",
+    "data-[state=active]:shadow-[inset_0_0_0_1px_rgba(116,146,255,0.2)]",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring"
   );
 
   return (
     <Tabs.Root defaultValue="overview" className="space-y-6">
-      <div className="overflow-x-auto">
-        <Tabs.List className="inline-flex items-center gap-1 rounded-xl bg-muted/50 p-1 border border-border/50">
+      <div className="safe-scroll-x rounded-3xl border border-white/10 bg-white/[0.035] p-1">
+        <Tabs.List className="inline-flex min-w-max items-center gap-1">
           <Tabs.Trigger value="overview" className={tabTriggerClass}>
             Overview
           </Tabs.Trigger>
@@ -887,6 +895,12 @@ export function CompanyTabs({
           </Tabs.Trigger>
           <Tabs.Trigger value="risk" className={tabTriggerClass}>
             Risk Analysis
+          </Tabs.Trigger>
+          <Tabs.Trigger value="market" className={tabTriggerClass}>
+            Market
+          </Tabs.Trigger>
+          <Tabs.Trigger value="news" className={tabTriggerClass}>
+            News
           </Tabs.Trigger>
           <Tabs.Trigger value="fraud" className={tabTriggerClass}>
             <span className="flex items-center gap-1.5">
@@ -897,6 +911,9 @@ export function CompanyTabs({
                 </span>
               )}
             </span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="analyst" className={tabTriggerClass}>
+            AI Analyst
           </Tabs.Trigger>
         </Tabs.List>
       </div>
@@ -968,7 +985,7 @@ export function CompanyTabs({
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-6 2xl:grid-cols-2">
           {marketData && <MarketIntelligenceCard data={marketData} />}
           {newsData && <NewsIntelligenceCard data={newsData} />}
         </div>
@@ -1174,9 +1191,66 @@ export function CompanyTabs({
         <RiskAnalysisTab company={company} />
       </Tabs.Content>
 
+      {/* ── Market Tab ─────────────────────────────────────────────── */}
+      <Tabs.Content value="market" className="space-y-4 outline-none">
+        <ResponsiveGrid min="minmax(220px,1fr)">
+          <MetricTile label="Momentum Score" value={`${marketMomentumScore}/100`} detail={marketData?.marketMomentum.label ?? "Mock market context"} tone="info" />
+          <MetricTile label="Latest Price" value={marketData ? `$${marketData.metrics.latestPrice.toFixed(2)}` : "N/A"} detail={marketData ? `${marketData.ticker} mock quote` : "No market fixture"} tone="good" />
+          <MetricTile label="1Y Move" value={marketData ? `${marketData.metrics.performance.oneYear >= 0 ? "+" : ""}${marketData.metrics.performance.oneYear.toFixed(1)}%` : "N/A"} detail="Mock price performance" tone="accent" />
+        </ResponsiveGrid>
+        {marketData ? (
+          <MarketIntelligenceCard data={marketData} />
+        ) : (
+          <PremiumCard className="p-6 text-sm text-muted-foreground">No mock market data is available for this ticker.</PremiumCard>
+        )}
+      </Tabs.Content>
+
+      {/* ── News Tab ──────────────────────────────────────────────── */}
+      <Tabs.Content value="news" className="space-y-4 outline-none">
+        <ResponsiveGrid min="minmax(220px,1fr)">
+          <MetricTile label="Sentiment Score" value={`${newsSentimentScore}/100`} detail={newsData?.sentiment.label ?? "Mock sentiment"} tone="watch" />
+          <MetricTile label="Events" value={String(newsData?.items.length ?? 0)} detail="Classified mock news records" tone="info" />
+          <MetricTile label="High Severity" value={String(newsData?.items.filter((item) => item.severity === "high" || item.severity === "critical").length ?? 0)} detail="Events needing review" tone="bad" />
+        </ResponsiveGrid>
+        {newsData ? (
+          <NewsIntelligenceCard data={newsData} />
+        ) : (
+          <PremiumCard className="p-6 text-sm text-muted-foreground">No mock news data is available for this ticker.</PremiumCard>
+        )}
+      </Tabs.Content>
+
       {/* ── Fraud Signals Tab ─────────────────────────────────────── */}
       <Tabs.Content value="fraud" className="outline-none">
         <FraudSignalsTab company={company} />
+      </Tabs.Content>
+
+      {/* ── AI Analyst Tab ────────────────────────────────────────── */}
+      <Tabs.Content value="analyst" className="space-y-4 outline-none">
+        <CommandPanel
+          title="Structured AI analyst memo"
+          description={analyst.executiveSummary}
+          icon={Activity}
+        >
+          <div className="mb-4 flex flex-wrap gap-2">
+            <StatusBadge tone="accent">Mock AI output</StatusBadge>
+            <StatusBadge tone="neutral">Explains model/rule outputs</StatusBadge>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <CommandPanel title="Financial signals" description={analyst.executiveSummary} icon={TrendingUp} />
+            <CommandPanel title="Risk signals" description={analyst.keyRisks.join(" ")} icon={ShieldAlert} />
+            <CommandPanel title="Recommended next steps" description={analyst.recommendedActions.join(" ")} icon={Target} />
+          </div>
+        </CommandPanel>
+        <SignalList
+          items={[
+            { title: "AI does not calculate the score", detail: "Numerical scores come from deterministic mock model and rule outputs." },
+            { title: "Market and news are context", detail: "They help explain the company profile but do not override financial model signals." },
+            { title: "Use reports for memo framing", detail: "Generate a mock report preview after reviewing tabs and scenarios." },
+          ]}
+        />
+        <PremiumCard className="p-4 text-xs leading-6 text-muted-foreground">
+          {analyst.professionalDisclaimer}
+        </PremiumCard>
       </Tabs.Content>
     </Tabs.Root>
   );

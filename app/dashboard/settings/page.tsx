@@ -22,9 +22,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { AnalystMemoCard, DemoDataNotice, MetricDeltaCard } from "@/components/ui/premium-dashboard";
+import { PremiumPanel } from "@/components/ui/premium-panel";
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -88,6 +90,49 @@ export default function SettingsPage() {
     }
   };
 
+  const settingsCoverage = [
+    {
+      label: "Profile",
+      detail: "Analyst identity and role metadata",
+      value: settings.role,
+    },
+    {
+      label: "Workspace",
+      detail: "Default company view, currency, and workspace name",
+      value: settings.baseCurrency,
+    },
+    {
+      label: "Model preferences",
+      detail: "Mock data mode and export format choices",
+      value: settings.financialDataMode === "mock" ? "Mock" : "Disabled",
+    },
+    {
+      label: "Risk thresholds",
+      detail: "High, critical, and investment-health watchlist boundaries",
+      value: `${settings.riskThresholdHigh}/${settings.riskThresholdCritical}`,
+    },
+    {
+      label: "AI analyst",
+      detail: "Tone, detail level, disclaimers, and no-provider-call guardrail",
+      value: settings.aiDetailLevel,
+    },
+    {
+      label: "Market/news providers",
+      detail: "Provider selections are placeholders only",
+      value: "Mock",
+    },
+    {
+      label: "Notifications",
+      detail: "Risk, market, news, report, and digest switches",
+      value: settings.emailNotifications ? "Email on" : "Email off",
+    },
+    {
+      label: "Appearance",
+      detail: "Theme, language, and timezone controls",
+      value: settings.theme,
+    },
+  ];
+
   return (
     <DashboardPageShell maxWidth="wide">
       <PageHeader
@@ -112,16 +157,76 @@ export default function SettingsPage() {
         }
       />
 
+      <DemoDataNotice
+        title="Settings are local workspace preferences"
+        description="Save Changes simulates a local preference save. Authentication, provider credentials, webhook delivery, persistence, and external AI or market/news calls are not implemented in this prototype."
+        icon={SlidersHorizontal}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <MetricDeltaCard
+          label="Workspace mode"
+          value="Demo"
+          detail="Preferences are held in component state and reset with the session."
+          tone="info"
+        />
+        <MetricDeltaCard
+          label="Provider calls"
+          value="Off"
+          delta="Locked"
+          detail="Market, news, and LLM providers remain mock placeholders."
+          tone="watch"
+        />
+        <MetricDeltaCard
+          label="Risk thresholds"
+          value={`${settings.riskThresholdHigh}+`}
+          detail={`Critical alerts start at ${settings.riskThresholdCritical}; investment-health watchlist starts below ${settings.investmentHealthWatchlist}.`}
+        />
+        <MetricDeltaCard
+          label="Notifications"
+          value="5"
+          detail="Risk, market, news, report, and digest preferences are visible in one place."
+          tone="good"
+        />
+      </div>
+
+      <PremiumPanel className="p-5">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold">Settings Coverage</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Pass-two settings now expose every workspace area needed for the mock analyst flow without implying live integrations.
+            </p>
+          </div>
+          <Badge variant="outline" className="w-fit">Prototype controls</Badge>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+          {settingsCoverage.map((section) => (
+            <div key={section.label} className="rounded-lg border bg-background/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold">{section.label}</p>
+                <Badge variant="secondary" className="shrink-0 capitalize">
+                  {section.value}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">{section.detail}</p>
+            </div>
+          ))}
+        </div>
+      </PremiumPanel>
+
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-7">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="workspace">Workspace</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
-          <TabsTrigger value="data">Data & API</TabsTrigger>
-        </TabsList>
+        <div className="safe-scroll-x rounded-2xl border border-white/10 bg-white/[0.035] p-1">
+          <TabsList className="inline-flex h-auto min-w-max gap-1 bg-transparent p-0">
+            <TabsTrigger value="profile" className="rounded-xl px-4">Profile</TabsTrigger>
+            <TabsTrigger value="workspace" className="rounded-xl px-4">Workspace</TabsTrigger>
+            <TabsTrigger value="notifications" className="rounded-xl px-4">Notifications</TabsTrigger>
+            <TabsTrigger value="security" className="rounded-xl px-4">Security</TabsTrigger>
+            <TabsTrigger value="appearance" className="rounded-xl px-4">Appearance</TabsTrigger>
+            <TabsTrigger value="intelligence" className="rounded-xl px-4">Intelligence</TabsTrigger>
+            <TabsTrigger value="data" className="rounded-xl px-4">Data & API</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="profile" className="space-y-6">
           <Card>
@@ -135,15 +240,14 @@ export default function SettingsPage() {
               {/* Avatar */}
               <div className="flex items-center gap-6">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src="/placeholder-avatar.jpg" />
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm">
-                    Change Avatar
+                  <Button variant="outline" size="sm" disabled>
+                    Avatar Upload Disabled
                   </Button>
                   <p className="text-sm text-muted-foreground">
-                    JPG, PNG or GIF. Max size 2MB.
+                    Avatar storage is not implemented in this mock sprint.
                   </p>
                 </div>
               </div>
@@ -610,7 +714,8 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Switch
-                  checked={settings.allowProviderCalls}
+                  checked={false}
+                  disabled
                   onCheckedChange={(checked) => updateSetting("allowProviderCalls", checked)}
                 />
               </div>
@@ -694,13 +799,13 @@ export default function SettingsPage() {
                       readOnly
                       className="font-mono"
                     />
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" disabled>
                       <Key className="h-4 w-4 mr-2" />
-                      Regenerate
+                      Locked
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Use this key to access the FinSight API programmatically
+                    API keys are display-only placeholders; programmatic access is not implemented.
                   </p>
                 </div>
 
@@ -713,7 +818,7 @@ export default function SettingsPage() {
                     onChange={(e) => updateSetting("webhookUrl", e.target.value)}
                   />
                   <p className="text-sm text-muted-foreground">
-                    Receive real-time notifications about risk changes
+                    Webhook delivery is not active; this field documents the future integration target.
                   </p>
                 </div>
 
@@ -741,27 +846,40 @@ export default function SettingsPage() {
           {/* API Usage */}
           <Card>
             <CardHeader>
-              <CardTitle>API Usage</CardTitle>
+              <CardTitle>Mock API Usage Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">1,234</div>
-                  <p className="text-sm text-muted-foreground">Requests Today</p>
+                  <p className="text-sm text-muted-foreground">Demo requests today</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">45,678</div>
-                  <p className="text-sm text-muted-foreground">Requests This Month</p>
+                  <p className="text-sm text-muted-foreground">Demo requests this month</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">98%</div>
-                  <p className="text-sm text-muted-foreground">Uptime</p>
+                  <p className="text-sm text-muted-foreground">Sample uptime label</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AnalystMemoCard
+        eyebrow="Governance note"
+        title="Settings are designed for a future integrated workspace"
+        summary="The current route keeps user-facing controls visible and structured, while marking provider calls, credentials, avatar storage, and persistence as unavailable until the backend work exists."
+        bullets={[
+          "Workspace, profile, thresholds, model, analyst, provider, notification, and appearance settings are all represented.",
+          "Provider-related choices remain explicit placeholders so users can understand the roadmap without triggering live systems.",
+          "Save Changes only simulates local preference state and does not write to authentication or persistence layers.",
+        ]}
+        disclaimer="Do not treat these settings as security controls, compliance controls, data-retention rules, or live provider configuration."
+        icon={Bot}
+      />
     </DashboardPageShell>
   );
 }

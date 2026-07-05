@@ -1,24 +1,16 @@
 import Link from "next/link";
 import {
-  Building2,
   AlertTriangle,
   ShieldX,
-  TrendingUp,
   Activity,
   Info,
   ArrowRight,
   Clock,
   BarChart3,
+  LineChart,
   Newspaper,
   Sparkles,
 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
 import { RiskBadge } from "@/components/ui/risk-badge";
 import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
 import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
@@ -36,7 +28,17 @@ import type { Alert } from "@/types";
 import { cn } from "@/lib/utils";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { InsightStatCard } from "@/components/ui/insight-stat-card";
+import {
+  ChartPanel,
+  CommandPanel,
+  IntelligenceCard,
+  MetricTile,
+  PremiumCard,
+  ResponsiveGrid,
+  ScoreStrip,
+  SignalPill,
+  StatusBadge,
+} from "@/components/ui/premium-primitives";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -190,297 +192,203 @@ export default function DashboardPage() {
         }
       />
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 xl:grid-cols-6 gap-4">
-        <InsightStatCard
-          title="Total Companies"
-          value={String(stats.totalCompanies)}
-          description="Monitored in portfolio"
-          icon={Building2}
-          tone="info"
+      <ScoreStrip
+        items={[
+          {
+            label: "Financial Health",
+            value: stats.averageFinancialHealthScore,
+            detail: "Average mock score",
+            tone: signalTone(stats.averageFinancialHealthScore),
+          },
+          {
+            label: "Avg Risk",
+            value: stats.averageRiskScore,
+            detail: "Portfolio risk score",
+            tone: signalTone(stats.averageRiskScore, true),
+          },
+          {
+            label: "Investment Health",
+            value: stats.averageInvestmentHealthScore,
+            detail: "Composite signal",
+            tone: "accent",
+          },
+          {
+            label: "Market Momentum",
+            value: stats.averageMarketMomentumScore,
+            detail: "Mock price signal",
+            tone: "info",
+          },
+          {
+            label: "News Sentiment",
+            value: stats.averageNewsSentimentScore,
+            detail: `${stats.negativeNewsCount} negative events`,
+            tone: "watch",
+          },
+        ]}
+      />
+
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
+        <ChartPanel
+          title="Portfolio Risk Command Trend"
+          description="Average risk score across monitored companies from January 2024 to December 2024."
+          className="min-w-0"
+        >
+          <div className="h-[260px]">
+            <RiskTrendChart data={mockRiskTrend} />
+          </div>
+        </ChartPanel>
+        <PremiumCard className="min-w-0 p-5">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold tracking-tight">Risk Distribution</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Companies by deterministic risk tier.</p>
+          </div>
+          <RiskDistributionChart data={stats.riskDistribution} />
+        </PremiumCard>
+      </div>
+
+      <ResponsiveGrid min="minmax(260px,1fr)">
+        <IntelligenceCard
+          eyebrow="Elevated Companies"
+          value={String(stats.highRiskCount + stats.criticalCount)}
+          detail={`${stats.totalCompanies} companies monitored`}
+          icon={AlertTriangle}
+          tone={stats.highRiskCount + stats.criticalCount > 0 ? "watch" : "good"}
         />
-        <InsightStatCard
-          title="Financial Health"
-          value={String(stats.averageFinancialHealthScore)}
-          description="Average score"
-          icon={BarChart3}
-          tone={signalTone(stats.averageFinancialHealthScore)}
-        />
-        <InsightStatCard
-          title="Avg Risk"
-          value={String(stats.averageRiskScore)}
-          description={`${stats.highRiskCount + stats.criticalCount} elevated`}
-          icon={TrendingUp}
-          tone={signalTone(stats.averageRiskScore, true)}
-        />
-        <InsightStatCard
-          title="Investment Health"
-          value={String(stats.averageInvestmentHealthScore)}
-          description="Composite research score"
-          icon={Sparkles}
-          tone="accent"
-        />
-        <InsightStatCard
-          title="News Risk"
+        <IntelligenceCard
+          eyebrow="Negative Events"
           value={String(stats.negativeNewsCount)}
-          description="Negative mock events"
+          detail="Classified mock news items"
           icon={Newspaper}
           tone={stats.negativeNewsCount > 5 ? "watch" : "info"}
         />
-        <InsightStatCard
-          title="Fraud Flags"
-          value={String(stats.fraudFlagCount)}
-          description="Companies with detected flags"
-          icon={ShieldX}
-          tone="bad"
+        <IntelligenceCard
+          eyebrow="Companies"
+          value={String(stats.totalCompanies)}
+          detail="Sector, market, news, and risk coverage"
+          icon={BarChart3}
+          tone="accent"
         />
-      </div>
+      </ResponsiveGrid>
 
-      {/* ── Charts row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Risk trend — 2/3 */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <CardTitle>Portfolio Risk Trend</CardTitle>
-                <CardDescription className="mt-0.5">
-                  Average risk score across all monitored companies — Jan 2024 to Dec 2024
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="h-2 w-4 rounded-sm bg-gradient-to-r from-blue-500 to-amber-500 inline-block" />
-                Avg score
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[220px]">
-              <RiskTrendChart data={mockRiskTrend} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Risk distribution — 1/3 */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Risk Distribution</CardTitle>
-            <CardDescription className="mt-0.5">
-              Companies by risk tier classification
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-1">
-            <RiskDistributionChart data={stats.riskDistribution} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="border-b pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Market Momentum</CardTitle>
-                <CardDescription className="mt-0.5">Top 1Y mock price moves</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/market"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-              >
-                Market <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="divide-y divide-border/60 pt-0">
+      <div className="grid gap-4 2xl:grid-cols-3">
+        <CommandPanel title="Market Momentum" description="Top one-year mock price moves." icon={LineChart}>
+          <div className="space-y-3">
             {marketMovers.map((item) => (
-              <div key={item.ticker} className="flex items-center justify-between gap-3 py-3">
+              <div key={item.ticker} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{item.companyName}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{item.ticker}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{item.ticker}</p>
                 </div>
                 <div className="text-right">
-                  <p className={cn("text-sm font-semibold tabular-nums", signalTextColor(item.marketMomentum.score))}>
+                  <p className={cn("font-mono text-sm font-semibold tabular-nums", signalTextColor(item.marketMomentum.score))}>
                     {item.marketMomentum.score}
                   </p>
-                  <p className={cn("text-xs tabular-nums", item.metrics.performance.oneYear >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                  <p className={cn("text-xs tabular-nums", item.metrics.performance.oneYear >= 0 ? "text-emerald-400" : "text-rose-400")}>
                     {formatPercent(item.metrics.performance.oneYear)}
                   </p>
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </CommandPanel>
 
-        <Card>
-          <CardHeader className="border-b pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>News Intelligence</CardTitle>
-                <CardDescription className="mt-0.5">Latest classified company events</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/news"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-              >
-                News <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="divide-y divide-border/60 pt-0">
+        <CommandPanel title="News Intelligence" description="Latest classified company events." icon={Newspaper}>
+          <div className="space-y-3">
             {recentNews.map((item) => (
-              <div key={item.id} className="py-3">
-                <div className="flex items-center justify-between gap-3">
+              <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+                <div className="flex items-start justify-between gap-3">
                   <p className="line-clamp-1 text-sm font-semibold">{item.title}</p>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                      item.sentiment === "positive" && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                      item.sentiment === "negative" && "bg-red-500/10 text-red-600 dark:text-red-400",
-                      item.sentiment === "neutral" && "bg-muted text-muted-foreground"
-                    )}
-                  >
+                  <StatusBadge tone={item.sentiment === "positive" ? "good" : item.sentiment === "negative" ? "bad" : "neutral"}>
                     {item.sentiment}
-                  </span>
+                  </StatusBadge>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
                   {item.companyName}: {item.summary}
                 </p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </CommandPanel>
 
-        <Card>
-          <CardHeader className="border-b pb-3">
-            <CardTitle>Investment Health Leaders</CardTitle>
-            <CardDescription className="mt-0.5">Composite mock research signal</CardDescription>
-          </CardHeader>
-          <CardContent className="divide-y divide-border/60 pt-0">
+        <CommandPanel title="Investment Health Leaders" description="Composite mock research signal." icon={Sparkles}>
+          <div className="space-y-3">
             {strongestInvestment.map((item) => (
-              <div key={item.company.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <Link
-                    href={`/dashboard/company/${item.company.id}`}
-                    className="truncate text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400"
-                  >
-                    {item.company.name}
-                  </Link>
-                  <p className="text-xs text-muted-foreground">{item.investmentHealth.label}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-24 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-violet-500"
-                      style={{ width: `${item.investmentHealth.score}%` }}
-                    />
+              <Link
+                key={item.company.id}
+                href={`/dashboard/company/${item.company.id}`}
+                className="block rounded-xl border border-white/10 bg-white/[0.025] p-3 transition hover:border-primary/30"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{item.company.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.investmentHealth.label}</p>
                   </div>
-                  <span className={cn("w-8 text-right text-sm font-bold tabular-nums", signalTextColor(item.investmentHealth.score))}>
+                  <p className={cn("font-mono text-lg font-semibold tabular-nums", signalTextColor(item.investmentHealth.score))}>
                     {item.investmentHealth.score}
-                  </span>
+                  </p>
                 </div>
-              </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-300" style={{ width: `${item.investmentHealth.score}%` }} />
+                </div>
+              </Link>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </CommandPanel>
       </div>
 
-      {/* ── Bottom row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Companies needing attention — 2/3 */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="border-b pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Companies Needing Attention</CardTitle>
-                <CardDescription className="mt-0.5">Highest risk scores in the portfolio</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/companies"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-              >
-                All companies <ArrowRight className="h-3 w-3" />
-              </Link>
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)]">
+        <PremiumCard className="min-w-0 p-5">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold tracking-tight">Attention Stream</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Highest-risk companies with revenue context and latest signal labels.</p>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0 divide-y divide-border/60">
+            <Link href="/dashboard/companies" className="inline-flex w-fit items-center gap-1 text-sm text-primary">
+              All companies <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="space-y-3">
             {topCompanies.map((item) => {
               const { company, latestPeriod } = item;
               return (
-                <div key={company.id} className="flex items-center gap-4 py-3.5 group">
-                  {/* Risk score badge */}
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted/60 font-bold text-sm tabular-nums">
-                    <span className={cn(
-                      item.riskScore >= 75 ? "text-red-600 dark:text-red-400" :
-                      item.riskScore >= 50 ? "text-orange-600 dark:text-orange-400" :
-                      "text-amber-600 dark:text-amber-400"
-                    )}>
+                <Link
+                  key={company.id}
+                  href={`/dashboard/company/${company.id}`}
+                  className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 transition hover:border-primary/30 md:grid-cols-[72px_minmax(0,1fr)_auto]"
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-background/70">
+                    <span className={cn("font-mono text-xl font-semibold", signalTextColor(item.riskScore, true))}>
                       {item.riskScore}
                     </span>
                   </div>
-
-                  {/* Company info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Link
-                        href={`/dashboard/company/${company.id}`}
-                        className="text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      >
-                        {company.name}
-                      </Link>
-                      <span className="text-xs text-muted-foreground font-mono">{company.ticker}</span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold">{company.name}</p>
+                      <SignalPill tone="neutral">{company.ticker}</SignalPill>
+                      <RiskBadge tier={company.riskTier} size="sm" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{company.sector} · {company.industry}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{company.sector} · {company.industry}</p>
                   </div>
-
-                  {/* Risk badge */}
-                  <div className="hidden md:flex flex-col items-end gap-1">
-                    <RiskBadge tier={company.riskTier} size="sm" />
-                    <span className="text-[11px] text-muted-foreground">
-                      IH {item.investmentHealth.score} · {item.negativeNewsCount} neg news
-                    </span>
+                  <div className="flex flex-wrap items-center gap-3 md:justify-end">
+                    <MetricTile label="Revenue" value={formatRevenue(latestPeriod.revenue)} detail={latestPeriod.period} />
+                    <MetricTile label="IH" value={String(item.investmentHealth.score)} detail={`${item.negativeNewsCount} neg news`} tone="accent" />
                   </div>
-
-                  {/* Revenue */}
-                  <div className="hidden sm:block text-right">
-                    <p className="text-xs font-medium tabular-nums">{formatRevenue(latestPeriod.revenue)}</p>
-                    <p className="text-[11px] text-muted-foreground">{latestPeriod.period}</p>
-                  </div>
-
-                  {/* View button */}
-                  <Link
-                    href={`/dashboard/company/${company.id}`}
-                    className="shrink-0 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    View <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
+                </Link>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </PremiumCard>
 
-        {/* Recent alerts — 1/3 */}
-        <Card>
-          <CardHeader className="border-b pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Recent Alerts</CardTitle>
-                <CardDescription className="mt-0.5">Latest risk events</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/alerts"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-              >
-                All <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-1 pb-2">
+        <CommandPanel title="Recent Alerts" description="Latest risk events across the mock watchlist." icon={AlertTriangle}>
+          <div className="divide-y divide-white/10">
             {recentAlerts.map((alert) => (
               <AlertRow key={alert.id} alert={alert} />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+          <Link href="/dashboard/alerts" className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
+            Open alert center <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </CommandPanel>
       </div>
     </DashboardPageShell>
   );

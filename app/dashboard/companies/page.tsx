@@ -23,6 +23,7 @@ import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell"
 import { PageHeader } from "@/components/dashboard/page-header";
 import { InsightStatCard } from "@/components/ui/insight-stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PremiumPanel } from "@/components/ui/premium-panel";
 import {
   companyIntelligence,
   type CompanyIntelligence,
@@ -323,7 +324,7 @@ export default function CompaniesPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <InsightStatCard
           title="Matched Companies"
           value={`${filtered.length}/${companyIntelligence.length}`}
@@ -355,16 +356,16 @@ export default function CompaniesPage() {
       </div>
 
       {/* ── Filter bar ── */}
-      <Card>
-        <div className="px-4 py-3 flex flex-wrap items-center gap-3">
+      <PremiumPanel className="p-4">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(150px,auto))_auto_auto] 2xl:items-center">
           {/* Search */}
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <div className="relative min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name, ticker, exchange, sector..."
-              className="pl-8 h-8 text-sm"
+              className="h-10 rounded-xl pl-8 text-sm"
               aria-label="Search companies"
             />
           </div>
@@ -373,7 +374,7 @@ export default function CompaniesPage() {
           <select
             value={sectorFilter}
             onChange={(e) => setSectorFilter(e.target.value as "all" | Sector)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+            className="h-10 min-w-0 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
             aria-label="Filter by sector"
           >
             <option value="all">All Sectors</option>
@@ -388,7 +389,7 @@ export default function CompaniesPage() {
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value as "all" | RiskTier)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+            className="h-10 min-w-0 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
             aria-label="Filter by risk tier"
           >
             <option value="all">All Risk Tiers</option>
@@ -402,7 +403,7 @@ export default function CompaniesPage() {
           <select
             value={fraudFilter}
             onChange={(e) => setFraudFilter(e.target.value as "all" | "flagged")}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+            className="h-10 min-w-0 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
             aria-label="Filter by fraud risk"
           >
             <option value="all">All Fraud Risk</option>
@@ -412,7 +413,7 @@ export default function CompaniesPage() {
           <select
             value={investmentFilter}
             onChange={(e) => setInvestmentFilter(e.target.value as "all" | "strong" | "watchlist")}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+            className="h-10 min-w-0 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
             aria-label="Filter by investment health"
           >
             <option value="all">All Investment Health</option>
@@ -423,7 +424,7 @@ export default function CompaniesPage() {
           <select
             value={newsFilter}
             onChange={(e) => setNewsFilter(e.target.value as "all" | "negative" | "high_severity")}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
+            className="h-10 min-w-0 rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30 cursor-pointer"
             aria-label="Filter by news signal"
           >
             <option value="all">All News</option>
@@ -434,18 +435,18 @@ export default function CompaniesPage() {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex h-10 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               <Filter className="h-3.5 w-3.5" />
               Clear filters
             </button>
           )}
 
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground 2xl:ml-auto">
             {filtered.length} of {companyIntelligence.length} companies
           </span>
         </div>
-      </Card>
+      </PremiumPanel>
 
       {filtered.length === 0 ? (
         <Card className="lg:hidden">

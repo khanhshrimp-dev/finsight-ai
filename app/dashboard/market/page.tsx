@@ -19,6 +19,12 @@ import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell"
 import { PageHeader } from "@/components/dashboard/page-header";
 import { InsightStatCard } from "@/components/ui/insight-stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PremiumPanel } from "@/components/ui/premium-panel";
+import {
+  AnalystMemoCard,
+  DemoDataNotice,
+  MetricDeltaCard,
+} from "@/components/ui/premium-dashboard";
 import {
   companyIntelligence,
   marketIntelligenceUniverse,
@@ -39,6 +45,12 @@ function formatMarketCap(value: number) {
   if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(0)}M`;
   return `$${value.toLocaleString()}`;
+}
+
+function formatVolume(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return value.toLocaleString();
 }
 
 function scoreColor(score: number) {
@@ -62,6 +74,7 @@ function momentumMatches(label: string, filter: MomentumFilter) {
 export default function MarketDashboardPage() {
   const [query, setQuery] = useState("");
   const [momentumFilter, setMomentumFilter] = useState<MomentumFilter>("all");
+  const [selectedTicker, setSelectedTicker] = useState(marketIntelligenceUniverse[0].ticker);
 
   const enriched = useMemo(
     () =>
@@ -93,6 +106,16 @@ export default function MarketDashboardPage() {
   const positiveOneYear = marketIntelligenceUniverse.filter((item) => item.metrics.performance.oneYear >= 0).length;
   const weakMomentum = marketIntelligenceUniverse.filter((item) => item.marketMomentum.score < 45).length;
   const volumeSpikes = marketIntelligenceUniverse.filter((item) => item.metrics.volumeChangePercent >= 25).length;
+  const focusedMarket =
+    marketIntelligenceUniverse.find((item) => item.ticker === selectedTicker) ?? marketIntelligenceUniverse[0];
+  const rangePosition = Math.round(
+    ((focusedMarket.metrics.latestPrice - focusedMarket.metrics.fiftyTwoWeekLow) /
+      (focusedMarket.metrics.fiftyTwoWeekHigh - focusedMarket.metrics.fiftyTwoWeekLow)) *
+      100
+  );
+  const topMovers = [...marketIntelligenceUniverse]
+    .sort((a, b) => Math.abs(b.metrics.performance.oneMonth) - Math.abs(a.metrics.performance.oneMonth))
+    .slice(0, 4);
 
   return (
     <DashboardPageShell maxWidth="wide">
@@ -113,7 +136,94 @@ export default function MarketDashboardPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <DemoDataNotice
+        icon={LineChart}
+        title="Mock market data for demonstration"
+        description="Prices, volume, volatility, moving averages, and performance are local mock values. No real-time, delayed, paid, scraped, or provider market feed is used."
+      />
+
+      <PremiumPanel className="p-5">
+        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="min-w-0">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <Badge variant="outline" className="mb-3">Price context</Badge>
+                <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <h2 className="text-3xl font-semibold tracking-tight">{formatCurrency(focusedMarket.metrics.latestPrice)}</h2>
+                  <span className={cn("text-sm font-semibold tabular-nums", changeColor(focusedMarket.metrics.changePercent))}>
+                    {formatPercent(focusedMarket.metrics.changePercent)} 1D
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {focusedMarket.companyName} · {focusedMarket.ticker} · {focusedMarket.exchange}
+                </p>
+              </div>
+              <select
+                value={selectedTicker}
+                onChange={(event) => setSelectedTicker(event.target.value)}
+                className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                aria-label="Select market ticker"
+              >
+                {marketIntelligenceUniverse.map((item) => (
+                  <option key={item.ticker} value={item.ticker}>
+                    {item.ticker} - {item.companyName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+              <MetricDeltaCard label="1W" value={formatPercent(focusedMarket.metrics.performance.oneWeek)} detail="Mock one-week move" tone={focusedMarket.metrics.performance.oneWeek >= 0 ? "good" : "bad"} />
+              <MetricDeltaCard label="1M" value={formatPercent(focusedMarket.metrics.performance.oneMonth)} detail="Mock one-month move" tone={focusedMarket.metrics.performance.oneMonth >= 0 ? "good" : "bad"} />
+              <MetricDeltaCard label="6M" value={formatPercent(focusedMarket.metrics.performance.sixMonth)} detail="Mock six-month move" tone={focusedMarket.metrics.performance.sixMonth >= 0 ? "good" : "bad"} />
+              <MetricDeltaCard label="1Y" value={formatPercent(focusedMarket.metrics.performance.oneYear)} detail="Mock one-year move" tone={focusedMarket.metrics.performance.oneYear >= 0 ? "good" : "bad"} />
+            </div>
+
+            <div className="mt-5 rounded-lg border bg-background/70 p-4">
+              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>52-week low {formatCurrency(focusedMarket.metrics.fiftyTwoWeekLow)}</span>
+                <span>52-week high {formatCurrency(focusedMarket.metrics.fiftyTwoWeekHigh)}</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, rangePosition))}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Latest price sits {Math.min(100, Math.max(0, rangePosition))}% through the mock 52-week range.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <MetricDeltaCard
+              label="Momentum score"
+              value={`${focusedMarket.marketMomentum.score}/100`}
+              detail={focusedMarket.marketMomentum.label}
+              tone={focusedMarket.marketMomentum.score >= 70 ? "good" : focusedMarket.marketMomentum.score >= 50 ? "watch" : "bad"}
+            />
+            <MetricDeltaCard
+              label="Volume"
+              value={formatVolume(focusedMarket.metrics.volume)}
+              delta={formatPercent(focusedMarket.metrics.volumeChangePercent)}
+              detail={`Average ${formatVolume(focusedMarket.metrics.averageVolume)}`}
+              tone={focusedMarket.metrics.volumeChangePercent >= 25 ? "watch" : "default"}
+            />
+            <MetricDeltaCard
+              label="Volatility"
+              value={formatPercent(focusedMarket.metrics.volatility)}
+              detail="Mock annualized volatility"
+              tone={focusedMarket.metrics.volatility > 35 ? "watch" : "default"}
+            />
+            <MetricDeltaCard
+              label="Moving averages"
+              value={focusedMarket.metrics.movingAverageStatus.replaceAll("_", " ")}
+              detail={`50D ${formatCurrency(focusedMarket.metrics.movingAverage50)} · 200D ${formatCurrency(focusedMarket.metrics.movingAverage200)}`}
+              tone="info"
+            />
+          </div>
+        </div>
+      </PremiumPanel>
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <InsightStatCard
           title="Average Momentum"
           value={averageMomentum}
@@ -144,22 +254,22 @@ export default function MarketDashboardPage() {
         />
       </div>
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <div className="relative min-w-[220px] flex-1 max-w-sm">
+      <PremiumPanel className="p-4">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_190px] 2xl:grid-cols-[minmax(0,360px)_190px_auto] 2xl:items-center">
+          <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search company, ticker, or sector"
-              className="h-8 pl-8"
+              className="h-10 rounded-xl pl-8"
               aria-label="Search market intelligence"
             />
           </div>
           <select
             value={momentumFilter}
             onChange={(event) => setMomentumFilter(event.target.value as MomentumFilter)}
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
+            className="h-10 w-full rounded-xl border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-input/30"
             aria-label="Filter by momentum"
           >
             <option value="all">All Momentum</option>
@@ -168,13 +278,13 @@ export default function MarketDashboardPage() {
             <option value="volatile" className="bg-background">Volatile</option>
             <option value="weak" className="bg-background">Weak Momentum</option>
           </select>
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground 2xl:text-right">
             {filtered.length} of {marketIntelligenceUniverse.length} tickers
           </span>
         </div>
-      </Card>
+      </PremiumPanel>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
         <Card>
           <CardHeader className="border-b pb-3">
             <CardTitle>Market Universe</CardTitle>
@@ -257,6 +367,40 @@ export default function MarketDashboardPage() {
         </Card>
 
         <div className="space-y-4">
+          <AnalystMemoCard
+            icon={Activity}
+            eyebrow="Market interpretation"
+            title={`${focusedMarket.ticker} context summary`}
+            summary={`${focusedMarket.companyName} shows a ${focusedMarket.marketMomentum.label.toLowerCase()} profile in the mock market module. Market movement is supporting context only and does not override financial model outputs.`}
+            bullets={focusedMarket.marketMomentum.drivers.slice(0, 3).map((driver) => driver.explanation)}
+            disclaimer="Mock market data is not real-time and is not an investment recommendation."
+          />
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Top Movers</CardTitle>
+              <CardDescription>Largest absolute 1M moves among mock companies.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {topMovers.map((item) => (
+                <button
+                  key={item.ticker}
+                  type="button"
+                  onClick={() => setSelectedTicker(item.ticker)}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div>
+                    <p className="font-semibold">{item.ticker}</p>
+                    <p className="text-xs text-muted-foreground">{item.companyName}</p>
+                  </div>
+                  <span className={cn("font-mono text-sm font-semibold tabular-nums", changeColor(item.metrics.performance.oneMonth))}>
+                    {formatPercent(item.metrics.performance.oneMonth)}
+                  </span>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>Momentum Drivers</CardTitle>

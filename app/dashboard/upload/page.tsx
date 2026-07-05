@@ -13,6 +13,9 @@ import {
   FileSpreadsheet,
   FileImage,
   File,
+  ClipboardCheck,
+  Sparkles,
+  TableProperties,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { AnalystMemoCard, DemoDataNotice, MetricDeltaCard } from "@/components/ui/premium-dashboard";
+import { PremiumPanel } from "@/components/ui/premium-panel";
 import { cn } from "@/lib/utils";
 
 interface UploadedFile {
@@ -270,36 +275,77 @@ export default function UploadPage() {
         iconClassName="text-sky-600 dark:text-sky-400"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <DemoDataNotice
+        title="Upload functionality is currently mocked"
+        description="This page validates formats, simulates upload progress, and previews rows in local UI state only. It does not parse documents, persist files, call provider APIs, or enrich company records."
+        icon={ClipboardCheck}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <MetricDeltaCard
+          label="Accepted formats"
+          value="CSV/XLS/PDF"
+          detail="The UI accepts spreadsheet, PDF, text, and CSV extensions for the mock flow."
+          tone="info"
+        />
+        <MetricDeltaCard
+          label="Max upload"
+          value="50MB"
+          detail="Client-side size checks prevent oversized mock files from entering progress state."
+        />
+        <MetricDeltaCard
+          label="Sample sets"
+          value={`${sampleDatasets.length}`}
+          detail="Seeded datasets cover healthy, distressed, and refinancing-watchlist cases."
+          tone="good"
+        />
+        <MetricDeltaCard
+          label="Persistence"
+          value="Off"
+          delta="Mock"
+          detail="No file contents leave this browser session in the current prototype."
+          tone="watch"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Upload Area */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CloudUpload className="h-5 w-5" />
-                Upload Files
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="min-w-0">
+          <PremiumPanel className="p-5">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+                  <CloudUpload className="h-5 w-5 text-primary" aria-hidden="true" />
+                  File Intake
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Stage documents for validation and preview the intended parser flow before any real ingestion exists.
+                </p>
+              </div>
+              <Badge variant="outline" className="w-fit">Local simulation</Badge>
+            </div>
+            <div className="space-y-4">
               {/* Drag & Drop Area */}
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+                  "rounded-lg border-2 border-dashed p-8 text-center transition-all duration-200",
                   isDragOver
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                    : "border-gray-300 dark:border-gray-600",
-                  "hover:border-gray-400 dark:hover:border-gray-500"
+                    ? "border-primary bg-primary/10 shadow-sm"
+                    : "border-border bg-background/60",
+                  "hover:border-primary/45"
                 )}
               >
-                <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border bg-card text-primary">
+                  <Upload className="h-7 w-7" aria-hidden="true" />
+                </div>
                 <h3 className="text-lg font-semibold mb-2">
                   {isDragOver ? "Drop files here" : "Drag & drop files here"}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  or click to browse files
+                  Browse local files to preview validation, progress, and parser-ready rows.
                 </p>
                 <input
                   type="file"
@@ -331,8 +377,8 @@ export default function UploadPage() {
               </div>
 
               {/* Supported Formats */}
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium mb-2">Supported formats:</p>
+              <div className="rounded-lg border bg-background/60 p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-2">Supported formats</p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">CSV</Badge>
                   <Badge variant="secondary">Excel (.xlsx, .xls)</Badge>
@@ -341,18 +387,21 @@ export default function UploadPage() {
                 </div>
                 <p className="mt-2">Maximum file size: 50MB</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </PremiumPanel>
 
-          <div className="mt-6 grid gap-6 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
+          <div className="mt-6 grid gap-6 2xl:grid-cols-2">
+            <PremiumPanel className="p-5">
+              <div className="mb-4">
+                <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+                  <Database className="h-5 w-5 text-primary" aria-hidden="true" />
                   Sample Dataset
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Load representative cases for demo-only upload and scoring previews.
+                </p>
+              </div>
+              <div className="space-y-4">
                 <select
                   value={selectedSampleId}
                   onChange={(event) => {
@@ -385,17 +434,20 @@ export default function UploadPage() {
                     {selectedSample.rows} fiscal periods will be loaded into the mock parser preview.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </PremiumPanel>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5" />
+            <PremiumPanel className="p-5">
+              <div className="mb-4">
+                <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+                  <FileSpreadsheet className="h-5 w-5 text-primary" aria-hidden="true" />
                   Manual Financial Input
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Enter a minimal statement snapshot to compare against sample rows.
+                </p>
+              </div>
+              <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {([
                     ["companyName", "Company Name"],
@@ -415,15 +467,26 @@ export default function UploadPage() {
                     </label>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </PremiumPanel>
           </div>
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Parsing Preview & Validation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <PremiumPanel className="mt-6 p-5">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+                  <TableProperties className="h-5 w-5 text-primary" aria-hidden="true" />
+                  Parsing Preview & Validation
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Compare sample and manual rows before sending the data into the mock analysis state.
+                </p>
+              </div>
+              <Badge variant={analysisState === "ready" ? "secondary" : "outline"} className="w-fit">
+                {analysisState === "ready" ? "Ready for review" : "Awaiting validation"}
+              </Badge>
+            </div>
+            <div className="space-y-4">
               <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full text-sm">
                   <thead>
@@ -464,7 +527,7 @@ export default function UploadPage() {
                 </table>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/70 p-4">
                 <div>
                   <p className="text-sm font-semibold">Mock validation state</p>
                   <p className="text-xs text-muted-foreground">
@@ -490,8 +553,8 @@ export default function UploadPage() {
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </PremiumPanel>
 
           {/* Upload Progress */}
           {files.length > 0 && (
@@ -547,13 +610,27 @@ export default function UploadPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
+          <AnalystMemoCard
+            eyebrow="Intake guidance"
+            title="What should happen before real ingestion?"
+            summary="The current screen should teach the future upload workflow without implying that files are parsed, persisted, or enriched today."
+            bullets={[
+              "Accepted formats, size limits, and validation status are visible before analysis.",
+              "Sample and manual entries show the shape of the target financial dataset.",
+              "Mock progress helps test loading, error, and ready states without backend dependencies.",
+            ]}
+            disclaimer="Real upload parsing, storage, provider mapping, and audit trails remain future implementation work."
+            icon={Sparkles}
+          />
+
           {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <PremiumPanel className="p-5">
+            <h2 className="text-base font-semibold tracking-tight">Quick Actions</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Preview intended next steps without triggering external calls.
+            </p>
+            <div className="mt-4 space-y-3">
               <Button variant="outline" className="w-full justify-start">
                 <Database className="h-4 w-4 mr-2" />
                 Preview Database Mapping
@@ -566,8 +643,8 @@ export default function UploadPage() {
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Load Sample Data
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </PremiumPanel>
 
           {/* Upload History */}
           <Card>

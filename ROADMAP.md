@@ -1,6 +1,6 @@
 # FinSight AI Roadmap
 
-Audit date: 2026-07-04
+Audit date: 2026-07-05
 
 FinSight AI is intended to be a hybrid company intelligence and investment health platform. Numerical scores should come from financial models, deterministic accounting rules, market intelligence, and news/event intelligence. AI should explain, summarize, and support copilot/report workflows; it should not be the core numerical risk predictor.
 
@@ -58,7 +58,7 @@ Risks/unknowns:
 
 Goal: Finish the demo-grade dashboard UI across portfolio, company detail, alerts, reports, upload, compare, and copilot surfaces.
 
-Current status: Mock UI sprint complete
+Current status: Mock UI and premium visual sprint complete
 
 Completed items:
 - Marketing landing page exists.
@@ -76,10 +76,17 @@ Completed items:
 - Add shared dashboard page shell, page header, KPI card, status badge, and error state primitives.
 - Group sidebar navigation and add mobile dashboard navigation.
 - Add responsive company cards, route loading/error states, and stronger empty states on market/news/company search surfaces.
+- Rebuilt the marketing landing page as a premium, mock-honest product story with command-center preview, intelligence layers, scenario simulator, AI analyst workspace, and responsible-use disclaimer.
+- Added premium landing primitives: `MotionReveal`, `PremiumPanel`, `BentoCard`, and `FloatingMetric`.
+- Refined dashboard overview KPI hierarchy and company detail hero actions.
+- Updated `PREMIUM_UI_REDESIGN_PLAN.md`, `LANDING_PAGE_STRATEGY.md`, and `DASHBOARD_UX_STRATEGY.md`.
+- Added premium dashboard primitives for demo notices, metric deltas, analyst memos, filter shells, command cards, and split workspaces.
+- Completed premium pass-two redesign for Copilot, Reports, Simulator, Compare, Market, News, Alerts, Upload, and Settings.
+- Added `VISUAL_QA_CHECKLIST.md` for route and viewport review coverage until automated screenshot regression exists.
 
 Remaining items:
 - Add automated visual regression coverage when a browser runner is available.
-- Continue targeted accessibility review with a real browser once local browser access is unblocked.
+- Continue targeted accessibility review with broader browser-assisted checks across secondary routes.
 - Remove dead references as product behavior changes.
 
 Priority: High
