@@ -25,6 +25,10 @@ import {
   MetricDeltaCard,
 } from "@/components/ui/premium-dashboard";
 import {
+  DetailDrawer,
+  ExpandableSection,
+} from "@/components/ui/progressive-disclosure";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -245,12 +249,73 @@ export default function ScenarioSimulatorPage() {
     ]);
   };
 
+  const renderControlGroup = (group: (typeof metricControlGroups)[number]) => (
+    <section key={group.title} className="rounded-lg border border-border/70 bg-background/70 p-4">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold">{group.title}</h3>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">{group.description}</p>
+      </div>
+      <div className="grid gap-4">
+        {group.keys.map((key) => {
+          const control = metricControls.find((item) => item.key === key);
+          if (!control) return null;
+          const baseValue = Number(baseMetrics[control.key] ?? 0);
+          const currentValue = Number(scenarioMetrics[control.key] ?? 0);
+          const changed = Math.abs(currentValue - baseValue) > 0.0001;
+
+          return (
+            <div
+              key={control.key}
+              className={cn(
+                "rounded-lg border p-3 transition-colors",
+                changed ? "border-primary/35 bg-primary/10" : "border-border/70 bg-card/80"
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{scenarioMetricLabels[control.key]}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Original: {formatValue(baseValue, control.format)}
+                  </p>
+                </div>
+                <Input
+                  type="number"
+                  value={currentValue}
+                  min={control.min}
+                  max={control.max}
+                  step={control.step}
+                  onChange={(event) => updateMetric(control.key, Number(event.target.value))}
+                  className="w-24 text-right font-mono"
+                  aria-label={`${scenarioMetricLabels[control.key]} scenario value`}
+                />
+              </div>
+              <input
+                type="range"
+                min={control.min}
+                max={control.max}
+                step={control.step}
+                value={currentValue}
+                onChange={(event) => updateMetric(control.key, Number(event.target.value))}
+                className="w-full accent-primary"
+                aria-label={scenarioMetricLabels[control.key]}
+              />
+              <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                <span>{formatValue(control.min, control.format)}</span>
+                <span>{formatValue(control.max, control.format)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+
   return (
     <DashboardPageShell maxWidth="wide">
       <PageHeader
         eyebrow="What-if Analysis"
-        title="Scenario Simulator"
-        description="Adjust key ratios and compare deterministic risk, financial-health, and investment-health impact in real time."
+        title="What happens if assumptions change?"
+        description="Adjust key ratios, compare deterministic score movement, and keep advanced scenario detail collapsed until needed."
         icon={SlidersHorizontal}
         actions={
           <>
@@ -385,12 +450,10 @@ export default function ScenarioSimulatorPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Saved Scenarios</CardTitle>
-              <CardDescription>Local-only saved scenarios for the current session.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <ExpandableSection
+            title="Saved scenarios"
+            description="Local-only saved scenarios for this session. Collapsed by default to keep the model focused."
+          >
               {savedScenarios.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
                   No saved scenarios yet.
@@ -415,8 +478,7 @@ export default function ScenarioSimulatorPage() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </ExpandableSection>
         </div>
 
         <div className="space-y-6 xl:order-1">
@@ -428,66 +490,15 @@ export default function ScenarioSimulatorPage() {
               </p>
             </div>
             <div className="space-y-5">
-              {metricControlGroups.map((group) => (
-                <section key={group.title} className="rounded-lg border border-border/70 bg-background/70 p-4">
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold">{group.title}</h3>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{group.description}</p>
-                  </div>
-                  <div className="grid gap-4">
-                    {group.keys.map((key) => {
-                      const control = metricControls.find((item) => item.key === key);
-                      if (!control) return null;
-                      const baseValue = Number(baseMetrics[control.key] ?? 0);
-                      const currentValue = Number(scenarioMetrics[control.key] ?? 0);
-                      const changed = Math.abs(currentValue - baseValue) > 0.0001;
-
-                      return (
-                        <div
-                          key={control.key}
-                          className={cn(
-                            "rounded-lg border p-3 transition-colors",
-                            changed ? "border-primary/35 bg-primary/10" : "border-border/70 bg-card/80"
-                          )}
-                        >
-                          <div className="mb-3 flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium">{scenarioMetricLabels[control.key]}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                Original: {formatValue(baseValue, control.format)}
-                              </p>
-                            </div>
-                            <Input
-                              type="number"
-                              value={currentValue}
-                              min={control.min}
-                              max={control.max}
-                              step={control.step}
-                              onChange={(event) => updateMetric(control.key, Number(event.target.value))}
-                              className="w-24 text-right font-mono"
-                              aria-label={`${scenarioMetricLabels[control.key]} scenario value`}
-                            />
-                          </div>
-                          <input
-                            type="range"
-                            min={control.min}
-                            max={control.max}
-                            step={control.step}
-                            value={currentValue}
-                            onChange={(event) => updateMetric(control.key, Number(event.target.value))}
-                            className="w-full accent-primary"
-                            aria-label={scenarioMetricLabels[control.key]}
-                          />
-                          <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                            <span>{formatValue(control.min, control.format)}</span>
-                            <span>{formatValue(control.max, control.format)}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
+              {metricControlGroups.slice(0, 2).map(renderControlGroup)}
+              <ExpandableSection
+                title="Advanced assumptions"
+                description="Profitability, cash-flow, and growth controls are collapsed until needed."
+              >
+                <div className="space-y-5">
+                  {metricControlGroups.slice(2).map(renderControlGroup)}
+                </div>
+              </ExpandableSection>
             </div>
           </PremiumPanel>
 
@@ -505,7 +516,28 @@ export default function ScenarioSimulatorPage() {
                 ) : (
                   <div className="space-y-4">
                     {result.topDrivers.slice(0, 5).map((driver) => (
-                      <DriverImpactBar key={driver.key} driver={driver} />
+                      <DetailDrawer
+                        key={driver.key}
+                        title={driver.label}
+                        description="Scenario driver impact"
+                        trigger={
+                          <button className="block w-full rounded-xl p-2 text-left transition hover:bg-muted/35">
+                            <DriverImpactBar driver={driver} />
+                          </button>
+                        }
+                      >
+                        <div className="space-y-4">
+                          <MetricDeltaCard
+                            label="Risk impact"
+                            value={`${driver.riskImpact >= 0 ? "+" : ""}${driver.riskImpact} pts`}
+                            detail={`${formatValue(driver.before, driver.key === "grossMargin" || driver.key === "netMargin" || driver.key === "roa" || driver.key === "roe" || driver.key === "revenueGrowth" ? "percent" : "ratio")} to ${formatValue(driver.after, driver.key === "grossMargin" || driver.key === "netMargin" || driver.key === "roa" || driver.key === "roe" || driver.key === "revenueGrowth" ? "percent" : "ratio")}`}
+                            tone={driver.riskImpact > 0 ? "bad" : "good"}
+                          />
+                          <p className="text-sm leading-6 text-muted-foreground">
+                            This drawer keeps the driver explanation out of the main simulator flow while preserving drill-down detail for analysts who need it.
+                          </p>
+                        </div>
+                      </DetailDrawer>
                     ))}
                   </div>
                 )}

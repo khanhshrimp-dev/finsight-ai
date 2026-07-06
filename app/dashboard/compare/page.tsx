@@ -38,6 +38,7 @@ import {
   DemoDataNotice,
   MetricDeltaCard,
 } from "@/components/ui/premium-dashboard";
+import { PremiumTabs } from "@/components/ui/progressive-disclosure";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -699,328 +700,343 @@ export default function ComparePage() {
           disclaimer="No buy, sell, hold, valuation, credit, audit, or fraud conclusion is produced by this comparison."
         />
 
-        <IntelligenceComparison companyA={intelligenceA} companyB={intelligenceB} />
+        <PremiumTabs
+          defaultValue="signals"
+          tabs={[
+            {
+              value: "signals",
+              label: "Signals",
+              content: <IntelligenceComparison companyA={intelligenceA} companyB={intelligenceB} />,
+            },
+            {
+              value: "financials",
+              label: "Financials",
+              content: (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Metric Comparison</CardTitle>
+                    <CardDescription>
+                      Latest period financials — green cell indicates superior value
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border/60">
+                            <th className="text-left py-3 pr-6 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              Metric
+                            </th>
+                            <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wide">
+                              <span className="text-indigo-600 dark:text-indigo-400">
+                                {companyA.ticker}
+                              </span>
+                            </th>
+                            <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wide">
+                              <span className="text-violet-600 dark:text-violet-400">
+                                {companyB.ticker}
+                              </span>
+                            </th>
+                            <th className="text-center py-3 pl-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              Edge
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/40">
+                          {COMPARISON_METRICS.map((metric) => {
+                            const vA = getMetricValue(companyA, metric.key);
+                            const vB = getMetricValue(companyB, metric.key);
+                            const winner = getCellWinner(vA, vB, metric.higherIsBetter);
 
-        {/* ── Comparison Table ───────────────────────────────────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Metric Comparison</CardTitle>
-            <CardDescription>
-              Latest period financials — green cell indicates superior value
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="text-left py-3 pr-6 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Metric
-                    </th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wide">
-                      <span className="text-indigo-600 dark:text-indigo-400">
-                        {companyA.ticker}
-                      </span>
-                    </th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wide">
-                      <span className="text-violet-600 dark:text-violet-400">
-                        {companyB.ticker}
-                      </span>
-                    </th>
-                    <th className="text-center py-3 pl-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Edge
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {COMPARISON_METRICS.map((metric) => {
-                    const vA = getMetricValue(companyA, metric.key);
-                    const vB = getMetricValue(companyB, metric.key);
-                    const winner = getCellWinner(vA, vB, metric.higherIsBetter);
+                            const cellA = cn(
+                              "py-3 px-4 text-right tabular-nums font-semibold transition-colors rounded-lg",
+                              winner === "A"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : winner === "B"
+                                ? "text-muted-foreground/70"
+                                : "text-foreground"
+                            );
 
-                    const cellA = cn(
-                      "py-3 px-4 text-right tabular-nums font-semibold transition-colors rounded-lg",
-                      winner === "A"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : winner === "B"
-                        ? "text-muted-foreground/70"
-                        : "text-foreground"
-                    );
+                            const cellB = cn(
+                              "py-3 px-4 text-right tabular-nums font-semibold transition-colors rounded-lg",
+                              winner === "B"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : winner === "A"
+                                ? "text-muted-foreground/70"
+                                : "text-foreground"
+                            );
 
-                    const cellB = cn(
-                      "py-3 px-4 text-right tabular-nums font-semibold transition-colors rounded-lg",
-                      winner === "B"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : winner === "A"
-                        ? "text-muted-foreground/70"
-                        : "text-foreground"
-                    );
-
-                    return (
-                      <tr
-                        key={metric.key}
-                        className="hover:bg-muted/20 transition-colors group"
-                      >
-                        <td className="py-3 pr-6">
-                          <div className="font-medium text-foreground">
-                            {metric.label}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            {metric.description}
-                          </div>
-                        </td>
-                        <td className={cellA}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            {winner === "A" && (
-                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            )}
-                            {formatValue(vA, metric.format)}
-                          </div>
-                        </td>
-                        <td className={cellB}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            {winner === "B" && (
-                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            )}
-                            {formatValue(vB, metric.format)}
-                          </div>
-                        </td>
-                        <td className="py-3 pl-4 text-center">
-                          {winner === "A" ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                              {companyA.ticker}
-                            </span>
-                          ) : winner === "B" ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600 dark:text-violet-400">
-                              {companyB.ticker}
-                            </span>
-                          ) : winner === "tie" ? (
-                            <span className="text-[11px] text-muted-foreground">Tie</span>
-                          ) : (
-                            <span className="text-[11px] text-muted-foreground">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Win count summary */}
-            {(() => {
-              const results = COMPARISON_METRICS.map((m) =>
-                getCellWinner(
-                  getMetricValue(companyA, m.key),
-                  getMetricValue(companyB, m.key),
-                  m.higherIsBetter
-                )
-              );
-              const winsA = results.filter((r) => r === "A").length;
-              const winsB = results.filter((r) => r === "B").length;
-
-              return (
-                <div className="mt-4 flex flex-wrap items-center gap-3 pt-4 border-t border-border/40">
-                  <span className="text-xs text-muted-foreground">Metric wins:</span>
-                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    {companyA.ticker}: {winsA}
-                  </span>
-                  <span className="text-xs text-muted-foreground">vs</span>
-                  <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
-                    {companyB.ticker}: {winsB}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    {Math.max(winsA, winsB) > Math.min(winsA, winsB)
-                      ? `${winsA > winsB ? companyA.name : companyB.name} leads on ${Math.max(winsA, winsB)} of ${COMPARISON_METRICS.length} metrics`
-                      : "Evenly matched"}
-                  </span>
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
-
-        {/* ── Radar Chart + Key Differences: 2-col ───────────────────── */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Radar Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Normalized Performance Radar</CardTitle>
-              <CardDescription>
-                Each axis is normalized 0–100 relative to the pair — higher is
-                always better
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={360} minWidth={0}>
-                <RadarChart
-                  data={radarData}
-                  margin={{ top: 16, right: 24, bottom: 16, left: 24 }}
-                >
-                  <PolarGrid
-                    stroke="currentColor"
-                    strokeOpacity={0.12}
-                    gridType="polygon"
-                  />
-                  <PolarAngleAxis
-                    dataKey="metric"
-                    tick={{
-                      fontSize: 11,
-                      fill: "currentColor",
-                      opacity: 0.65,
-                    }}
-                  />
-                  <PolarRadiusAxis
-                    angle={90}
-                    domain={[0, 100]}
-                    tick={{ fontSize: 9, fill: "currentColor", opacity: 0.4 }}
-                    tickCount={4}
-                  />
-                  <Radar
-                    name={companyA.ticker}
-                    dataKey={companyA.ticker}
-                    stroke="#6366f1"
-                    fill="#6366f1"
-                    fillOpacity={0.18}
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
-                  />
-                  <Radar
-                    name={companyB.ticker}
-                    dataKey={companyB.ticker}
-                    stroke="#8b5cf6"
-                    fill="#8b5cf6"
-                    fillOpacity={0.18}
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "#8b5cf6", strokeWidth: 0 }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: "12px" }}
-                  />
-                  <Tooltip content={<RadarCustomTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Key Differences */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Key Differences</CardTitle>
-              <CardDescription>
-                Largest performance gaps between the two companies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <KeyDifferences companyA={companyA} companyB={companyB} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ── Risk Score Comparison ───────────────────────────────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Risk Score Overview</CardTitle>
-            <CardDescription>
-              Overall risk scores, fraud flags, and period risk trends
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {[companyA, companyB].map((company, idx) => {
-                const color = idx === 0 ? "#6366f1" : "#8b5cf6";
-                return (
-                  <div key={company.id} className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="inline-block h-3 w-3 rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
-                      <span className="font-semibold text-sm text-foreground">
-                        {company.name}
-                      </span>
-                      <Badge variant="outline" className="font-mono text-xs ml-auto">
-                        {company.ticker}
-                      </Badge>
+                            return (
+                              <tr
+                                key={metric.key}
+                                className="hover:bg-muted/20 transition-colors group"
+                              >
+                                <td className="py-3 pr-6">
+                                  <div className="font-medium text-foreground">
+                                    {metric.label}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                                    {metric.description}
+                                  </div>
+                                </td>
+                                <td className={cellA}>
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {winner === "A" && (
+                                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    )}
+                                    {formatValue(vA, metric.format)}
+                                  </div>
+                                </td>
+                                <td className={cellB}>
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {winner === "B" && (
+                                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    )}
+                                    {formatValue(vB, metric.format)}
+                                  </div>
+                                </td>
+                                <td className="py-3 pl-4 text-center">
+                                  {winner === "A" ? (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                                      {companyA.ticker}
+                                    </span>
+                                  ) : winner === "B" ? (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600 dark:text-violet-400">
+                                      {companyB.ticker}
+                                    </span>
+                                  ) : winner === "tie" ? (
+                                    <span className="text-[11px] text-muted-foreground">Tie</span>
+                                  ) : (
+                                    <span className="text-[11px] text-muted-foreground">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
 
-                    {/* Period risk scores */}
-                    <div className="space-y-2">
-                      {company.periods.map((period) => {
-                        const pctWidth = Math.min(100, period.riskScore);
-                        const barColor =
-                          period.riskScore <= 25
-                            ? "bg-emerald-500"
-                            : period.riskScore <= 50
-                            ? "bg-amber-500"
-                            : period.riskScore <= 75
-                            ? "bg-orange-500"
-                            : "bg-red-500";
+                    {(() => {
+                      const results = COMPARISON_METRICS.map((m) =>
+                        getCellWinner(
+                          getMetricValue(companyA, m.key),
+                          getMetricValue(companyB, m.key),
+                          m.higherIsBetter
+                        )
+                      );
+                      const winsA = results.filter((r) => r === "A").length;
+                      const winsB = results.filter((r) => r === "B").length;
 
+                      return (
+                        <div className="mt-4 flex flex-wrap items-center gap-3 pt-4 border-t border-border/40">
+                          <span className="text-xs text-muted-foreground">Metric wins:</span>
+                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                            {companyA.ticker}: {winsA}
+                          </span>
+                          <span className="text-xs text-muted-foreground">vs</span>
+                          <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
+                            {companyB.ticker}: {winsB}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {Math.max(winsA, winsB) > Math.min(winsA, winsB)
+                              ? `${winsA > winsB ? companyA.name : companyB.name} leads on ${Math.max(winsA, winsB)} of ${COMPARISON_METRICS.length} metrics`
+                              : "Evenly matched"}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              ),
+            },
+            {
+              value: "radar",
+              label: "Radar",
+              content: (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Normalized Performance Radar</CardTitle>
+                      <CardDescription>
+                        Each axis is normalized 0–100 relative to the pair — higher is always better
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={360} minWidth={0}>
+                        <RadarChart
+                          data={radarData}
+                          margin={{ top: 16, right: 24, bottom: 16, left: 24 }}
+                        >
+                          <PolarGrid
+                            stroke="currentColor"
+                            strokeOpacity={0.12}
+                            gridType="polygon"
+                          />
+                          <PolarAngleAxis
+                            dataKey="metric"
+                            tick={{
+                              fontSize: 11,
+                              fill: "currentColor",
+                              opacity: 0.65,
+                            }}
+                          />
+                          <PolarRadiusAxis
+                            angle={90}
+                            domain={[0, 100]}
+                            tick={{ fontSize: 9, fill: "currentColor", opacity: 0.4 }}
+                            tickCount={4}
+                          />
+                          <Radar
+                            name={companyA.ticker}
+                            dataKey={companyA.ticker}
+                            stroke="#6366f1"
+                            fill="#6366f1"
+                            fillOpacity={0.18}
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
+                          />
+                          <Radar
+                            name={companyB.ticker}
+                            dataKey={companyB.ticker}
+                            stroke="#8b5cf6"
+                            fill="#8b5cf6"
+                            fillOpacity={0.18}
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: "#8b5cf6", strokeWidth: 0 }}
+                          />
+                          <Legend
+                            iconType="circle"
+                            iconSize={8}
+                            wrapperStyle={{ fontSize: "12px" }}
+                          />
+                          <Tooltip content={<RadarCustomTooltip />} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Key Differences</CardTitle>
+                      <CardDescription>
+                        Largest performance gaps between the two companies
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <KeyDifferences companyA={companyA} companyB={companyB} />
+                    </CardContent>
+                  </Card>
+                </div>
+              ),
+            },
+            {
+              value: "risk",
+              label: "Risk trend",
+              content: (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Risk Score Overview</CardTitle>
+                    <CardDescription>
+                      Overall risk scores, fraud flags, and period risk trends
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                      {[companyA, companyB].map((company, idx) => {
+                        const color = idx === 0 ? "#6366f1" : "#8b5cf6";
                         return (
-                          <div
-                            key={period.period}
-                            className="flex items-center gap-3"
-                          >
-                            <span className="text-xs text-muted-foreground w-16 shrink-0">
-                              {period.period}
-                            </span>
-                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                              <div
-                                className={cn("h-full rounded-full", barColor)}
-                                style={{ width: `${pctWidth}%` }}
+                          <div key={company.id} className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <span
+                                className="inline-block h-3 w-3 rounded-full"
+                                style={{ backgroundColor: color }}
                               />
+                              <span className="font-semibold text-sm text-foreground">
+                                {company.name}
+                              </span>
+                              <Badge variant="outline" className="font-mono text-xs ml-auto">
+                                {company.ticker}
+                              </Badge>
                             </div>
-                            <span className="text-xs font-bold tabular-nums w-8 text-right text-foreground">
-                              {period.riskScore}
-                            </span>
+
+                            <div className="space-y-2">
+                              {company.periods.map((period) => {
+                                const pctWidth = Math.min(100, period.riskScore);
+                                const barColor =
+                                  period.riskScore <= 25
+                                    ? "bg-emerald-500"
+                                    : period.riskScore <= 50
+                                    ? "bg-amber-500"
+                                    : period.riskScore <= 75
+                                    ? "bg-orange-500"
+                                    : "bg-red-500";
+
+                                return (
+                                  <div
+                                    key={period.period}
+                                    className="flex items-center gap-3"
+                                  >
+                                    <span className="text-xs text-muted-foreground w-16 shrink-0">
+                                      {period.period}
+                                    </span>
+                                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                                      <div
+                                        className={cn("h-full rounded-full", barColor)}
+                                        style={{ width: `${pctWidth}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs font-bold tabular-nums w-8 text-right text-foreground">
+                                      {period.riskScore}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {company.alerts.length > 0 && (
+                              <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                                  <span className="text-xs font-semibold text-foreground">
+                                    {company.alerts.length} Active Alert
+                                    {company.alerts.length !== 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                                <div className="space-y-1">
+                                  {company.alerts.slice(0, 3).map((alert) => (
+                                    <div
+                                      key={alert.id}
+                                      className="flex items-start gap-2"
+                                    >
+                                      <span
+                                        className={cn(
+                                          "inline-block h-1.5 w-1.5 rounded-full mt-1.5 shrink-0",
+                                          alert.severity === "critical"
+                                            ? "bg-red-500"
+                                            : alert.severity === "warning"
+                                            ? "bg-amber-500"
+                                            : "bg-sky-500"
+                                        )}
+                                      />
+                                      <span className="text-xs text-muted-foreground leading-relaxed">
+                                        {alert.title}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
                     </div>
-
-                    {/* Alerts summary */}
-                    {company.alerts.length > 0 && (
-                      <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                          <span className="text-xs font-semibold text-foreground">
-                            {company.alerts.length} Active Alert
-                            {company.alerts.length !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          {company.alerts.slice(0, 3).map((alert) => (
-                            <div
-                              key={alert.id}
-                              className="flex items-start gap-2"
-                            >
-                              <span
-                                className={cn(
-                                  "inline-block h-1.5 w-1.5 rounded-full mt-1.5 shrink-0",
-                                  alert.severity === "critical"
-                                    ? "bg-red-500"
-                                    : alert.severity === "warning"
-                                    ? "bg-amber-500"
-                                    : "bg-sky-500"
-                                )}
-                              />
-                              <span className="text-xs text-muted-foreground leading-relaxed">
-                                {alert.title}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
+              ),
+            },
+          ]}
+        />
     </DashboardPageShell>
   );
 }

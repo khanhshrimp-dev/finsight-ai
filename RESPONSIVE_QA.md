@@ -1,10 +1,10 @@
 # Responsive QA
 
-Date: 2026-07-05
+Date: 2026-07-07
 
 ## Screenshot Evidence
 
-Post-redesign screenshots are saved in `visual-audit/redesign/`.
+Final progressive-disclosure pass screenshots are saved in `visual-audit/ia-pass-final/`.
 
 Captured routes:
 
@@ -33,12 +33,13 @@ Captured widths:
 
 | Gate | Result | Notes |
 | --- | --- | --- |
-| 390px page-level overflow | Pass | CDP audit reported no route-level overflow after contained scroll regions were excluded. |
-| 768px tablet compression | Pass | Persistent sidebar now starts at `lg`, leaving tablet layouts to use the mobile drawer and wider content. |
-| 1024px compact desktop | Pass | Major multi-column workspaces now wait until `2xl`, preventing cramped tablet/compact desktop compositions. |
-| 1440px desktop | Pass | Desktop screenshots show the redesigned shell, command-center cards, and flagship workspaces. |
-| Dense data tables | Pass with contained scroll | Company, market, and validation tables use contained horizontal scroll where the data model is wider than the viewport. |
-| Scrollable tabs/pills | Pass with contained scroll | Company tabs, alert categories, and settings tabs use safe contained horizontal scroll when needed. |
+| 390px page-level overflow | Pass | All audited routes passed the CDP overflow audit. Company header actions and metadata stack on mobile. |
+| 768px tablet compression | Pass | Disclosure tabs, drawers, accordions, and contained tables prevent route-level overflow. |
+| 1024px compact desktop | Pass | Workbench routes avoid cramped all-at-once layouts by using tabs and accordions. |
+| 1440px desktop | Pass | Desktop layouts preserve richer density while keeping secondary sections gated. |
+| Dense data tables | Pass with contained scroll | Compare, market, company financials, and upload validation tables use contained scroll where needed. |
+| Scrollable tabs/pills | Pass with contained scroll | Company, dashboard, compare, alerts, upload, and settings tabs remain route-contained. |
+| Mobile drawers | Pass | Alert, news, report, metric, and simulator driver details open in responsive drawer surfaces. |
 
 ## Automated Checks
 
@@ -49,12 +50,24 @@ npm run lint
 npm run typecheck
 npm run build
 node scripts/check-responsive-overflow.mjs http://localhost:3000
+node scripts/capture-visual-audit.mjs ia-pass-final http://localhost:3000
 ```
 
-The overflow audit checked all 13 routes across all 4 widths and passed after distinguishing contained scroll regions from page-level overflow.
+`check-responsive-overflow.mjs` checked all 13 routes across 4 widths, for 52 route/viewport checks total.
 
-## Notes
+## Manual Spot Checks
 
-- The app uses local mock data only; screenshots do not depend on live providers.
-- The Codex in-app browser rejected `localhost` navigation in this thread, so visual evidence was captured with local headless Chrome.
-- A final screenshot refresh after the last min-width polish was blocked by the environment escalation usage limit. The existing `visual-audit/redesign/` folder remains the post-redesign screenshot set, and the last code change only reduces mobile clipping risk.
+Spot-checked screenshots after the final capture:
+
+- `visual-audit/ia-pass-final/company-detail-390.png`
+- `visual-audit/ia-pass-final/compare-390.png`
+- `visual-audit/ia-pass-final/upload-390.png`
+- `visual-audit/ia-pass-final/dashboard-1440.png`
+
+Findings:
+
+- No page-level horizontal overflow detected.
+- Company detail mobile actions stack correctly.
+- Company detail mobile metadata no longer clips inside the header.
+- Upload wizard tabs are visible and compact at 390px.
+- Compare page no longer exposes the full analysis stack before tab selection.

@@ -3,13 +3,10 @@
 import { useState } from "react";
 import {
   TrendingUp,
-  TrendingDown,
   Minus,
   CheckCircle2,
   XCircle,
-  Clock,
   Target,
-  Lightbulb,
   ShieldAlert,
   Activity,
 } from "lucide-react";
@@ -21,13 +18,9 @@ import type {
   FinancialPeriod,
   FinancialMetrics,
   FraudSignal,
-  Recommendation,
-  TimelineEvent,
 } from "@/types";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MetricCard } from "@/components/ui/metric-card";
-import { TrendChart } from "@/components/charts/trend-chart";
 import { RiskDriversChart } from "@/components/charts/risk-drivers-chart";
 import { BenchmarkChart } from "@/components/charts/benchmark-chart";
 import { analyzeRisk, classifyRisk } from "@/lib/risk";
@@ -46,6 +39,13 @@ import {
   SignalList,
   StatusBadge,
 } from "@/components/ui/premium-primitives";
+import {
+  DetailDrawer,
+  ExpandableSection,
+  MethodologyPopover,
+  NewsEventDrawer,
+  ReportPreviewDrawer,
+} from "@/components/ui/progressive-disclosure";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,112 +69,6 @@ interface CompanyTabsProps {
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
-
-function TimelineItem({ event }: { event: TimelineEvent }) {
-  const impactConfig = {
-    positive: {
-      dot: "bg-emerald-500",
-      border: "border-emerald-500/30",
-      bg: "bg-emerald-500/5",
-      text: "text-emerald-600 dark:text-emerald-400",
-      icon: TrendingUp,
-    },
-    negative: {
-      dot: "bg-red-500",
-      border: "border-red-500/30",
-      bg: "bg-red-500/5",
-      text: "text-red-600 dark:text-red-400",
-      icon: TrendingDown,
-    },
-    neutral: {
-      dot: "bg-muted-foreground/50",
-      border: "border-border",
-      bg: "bg-muted/30",
-      text: "text-muted-foreground",
-      icon: Minus,
-    },
-  };
-
-  const config = impactConfig[event.impact];
-  const Icon = config.icon;
-
-  return (
-    <div className="flex gap-4 group">
-      {/* Timeline line + dot */}
-      <div className="flex flex-col items-center">
-        <div
-          className={cn(
-            "h-8 w-8 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5",
-            config.border,
-            config.bg
-          )}
-        >
-          <Icon className={cn("h-3.5 w-3.5", config.text)} />
-        </div>
-        <div className="w-px flex-1 bg-border/60 mt-2 mb-1 group-last:hidden" />
-      </div>
-
-      {/* Content */}
-      <div className="pb-6 min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-2 mb-1">
-          <span className="text-sm font-semibold text-foreground">{event.title}</span>
-          <span className="text-xs text-muted-foreground">{event.date}</span>
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {event.description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function RecommendationCard({ rec }: { rec: Recommendation }) {
-  const priorityConfig = {
-    high: {
-      badge: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
-      border: "border-l-red-500",
-    },
-    medium: {
-      badge: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
-      border: "border-l-amber-500",
-    },
-    low: {
-      badge: "bg-sky-500/10 text-sky-600 border-sky-500/20 dark:text-sky-400",
-      border: "border-l-sky-500",
-    },
-  };
-  const pc = priorityConfig[rec.priority];
-
-  return (
-    <Card className={cn("border-l-4", pc.border)}>
-      <CardContent className="pt-4 pb-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <h4 className="text-sm font-semibold text-foreground leading-snug">
-            {rec.title}
-          </h4>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0",
-              pc.badge
-            )}
-          >
-            {rec.priority}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-          {rec.description}
-        </p>
-        <div className="flex items-start gap-1.5 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-          <Target className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
-          <span>
-            <span className="font-medium text-foreground">Expected impact: </span>
-            {rec.expectedImpact}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function FraudSignalCard({ signal }: { signal: FraudSignal }) {
   const severityConfig = {
@@ -830,7 +724,6 @@ export function CompanyTabs({
   company,
   latestPeriod,
   prevPeriod,
-  metrics,
 }: CompanyTabsProps) {
   const m = latestPeriod.metrics;
   const generatedRisk = analyzeRisk(m, {
@@ -873,6 +766,10 @@ export function CompanyTabs({
       riskImpact: item.riskImpact,
     })),
   });
+  const latestImportantEvent =
+    newsData?.items.find((item) => item.severity === "critical" || item.severity === "high") ??
+    newsData?.items[0] ??
+    null;
 
   const tabTriggerClass = cn(
     "relative shrink-0 rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground",
@@ -915,269 +812,132 @@ export function CompanyTabs({
           <Tabs.Trigger value="analyst" className={tabTriggerClass}>
             AI Analyst
           </Tabs.Trigger>
+          <Tabs.Trigger value="reports" className={tabTriggerClass}>
+            Reports
+          </Tabs.Trigger>
         </Tabs.List>
       </div>
 
       {/* ── Overview Tab ──────────────────────────────────────────── */}
       <Tabs.Content value="overview" className="space-y-6 outline-none">
-        <InvestmentHealthPanel
-          financialHealthScore={financialHealthScore}
-          riskScore={riskScore}
-          marketMomentumScore={marketMomentumScore}
-          newsSentimentScore={newsSentimentScore}
-          investmentHealth={investmentHealth}
-        />
-
-        {/* AI Risk Analyst */}
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                <Activity className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle>AI Risk Analyst</CardTitle>
-                <CardDescription>
-                  Based on deterministic score, accounting rules, mock market/news intelligence, and benchmark data
-                </CardDescription>
-              </div>
+        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+          <CommandPanel
+            title="Executive summary"
+            description={analyst.executiveSummary}
+            icon={Activity}
+          >
+            <div className="mt-1 flex flex-wrap gap-2">
+              <StatusBadge tone="accent">Summary only</StatusBadge>
+              <MethodologyPopover label="Model basis">
+                Scores come from deterministic mock financial/risk rules, plus local mock market and news context. AI text explains those outputs; it does not create the numerical scores.
+              </MethodologyPopover>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground leading-relaxed">
-              {analyst.executiveSummary}
-            </p>
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              <div className="rounded-lg border bg-background/50 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Key risks
-                </p>
-                <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                  {analyst.keyRisks.slice(0, 3).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-lg border bg-background/50 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Fraud concerns
-                </p>
-                <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                  {analyst.fraudConcerns.slice(0, 3).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-lg border bg-background/50 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Next actions
-                </p>
-                <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                  {analyst.recommendedActions.slice(0, 3).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              {analyst.professionalDisclaimer}
-            </p>
-          </CardContent>
-        </Card>
+          </CommandPanel>
 
-        <div className="grid gap-6 2xl:grid-cols-2">
-          {marketData && <MarketIntelligenceCard data={marketData} />}
-          {newsData && <NewsIntelligenceCard data={newsData} />}
+          <PremiumCard className="p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Latest important event
+            </p>
+            {latestImportantEvent ? (
+              <div className="mt-3 space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge tone={latestImportantEvent.severity === "critical" || latestImportantEvent.severity === "high" ? "bad" : "watch"}>
+                    {latestImportantEvent.severity}
+                  </StatusBadge>
+                  <StatusBadge tone={latestImportantEvent.sentiment === "positive" ? "good" : latestImportantEvent.sentiment === "negative" ? "bad" : "neutral"}>
+                    {latestImportantEvent.sentiment}
+                  </StatusBadge>
+                </div>
+                <h3 className="text-base font-semibold leading-snug">{latestImportantEvent.title}</h3>
+                <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                  {latestImportantEvent.summary}
+                </p>
+                <NewsEventDrawer
+                  title={latestImportantEvent.title}
+                  description={`${latestImportantEvent.source} · ${new Date(latestImportantEvent.publishedAt).toLocaleDateString("en-US")}`}
+                  trigger={
+                    <button className="text-sm font-medium text-primary hover:underline">
+                      Open event detail
+                    </button>
+                  }
+                >
+                  <div className="space-y-4 text-sm">
+                    <p className="leading-6 text-muted-foreground">{latestImportantEvent.summary}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <MetricTile label="Event type" value={latestImportantEvent.eventType.replaceAll("_", " ")} />
+                      <MetricTile label="Risk impact" value={latestImportantEvent.riskImpact} tone={latestImportantEvent.riskImpact === "negative" ? "bad" : latestImportantEvent.riskImpact === "positive" ? "good" : "neutral"} />
+                      <MetricTile label="Relevance" value={`${latestImportantEvent.relevanceScore}/100`} tone="info" />
+                      <MetricTile label="Confidence" value={`${latestImportantEvent.confidenceScore}/100`} tone="accent" />
+                    </div>
+                  </div>
+                </NewsEventDrawer>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">No recent news event is available for this company.</p>
+            )}
+          </PremiumCard>
         </div>
 
-        {/* KPI Strip */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <MetricCard
-            title="Current Ratio"
-            value={formatMetric(m.currentRatio, "ratio")}
-            status={metrics.currentRatio.status}
-            tooltip="Ability to meet short-term obligations (>1.5 = healthy)"
-            trend={
-              prevPeriod
-                ? m.currentRatio > prevPeriod.metrics.currentRatio
-                  ? "up"
-                  : m.currentRatio < prevPeriod.metrics.currentRatio
-                  ? "down"
-                  : "neutral"
-                : undefined
-            }
-            trendValue={
-              prevPeriod
-                ? Math.abs(m.currentRatio - prevPeriod.metrics.currentRatio).toFixed(2)
-                : undefined
-            }
-            trendLabel="vs prior year"
-          />
-          <MetricCard
-            title="Debt / Equity"
-            value={formatMetric(m.debtToEquity, "ratio")}
-            status={metrics.debtToEquity.status}
-            tooltip="Total debt relative to equity (<1.0 = conservative)"
-            trend={
-              prevPeriod
-                ? m.debtToEquity < prevPeriod.metrics.debtToEquity
-                  ? "up"
-                  : m.debtToEquity > prevPeriod.metrics.debtToEquity
-                  ? "down"
-                  : "neutral"
-                : undefined
-            }
-            trendValue={
-              prevPeriod
-                ? Math.abs(m.debtToEquity - prevPeriod.metrics.debtToEquity).toFixed(2)
-                : undefined
-            }
-            trendLabel="vs prior year"
-          />
-          <MetricCard
-            title="Net Margin"
-            value={formatMetric(m.netMargin, "percent")}
-            status={metrics.netMargin.status}
-            tooltip="Net income as % of revenue (>5% = healthy)"
-            trend={
-              prevPeriod
-                ? m.netMargin > prevPeriod.metrics.netMargin
-                  ? "up"
-                  : m.netMargin < prevPeriod.metrics.netMargin
-                  ? "down"
-                  : "neutral"
-                : undefined
-            }
-            trendValue={
-              prevPeriod
-                ? Math.abs((m.netMargin - prevPeriod.metrics.netMargin) * 100).toFixed(1) + "pp"
-                : undefined
-            }
-            trendLabel="vs prior year"
-          />
-          <MetricCard
-            title="Interest Coverage"
-            value={formatMetric(m.interestCoverage, "ratio")}
-            status={metrics.interestCoverage.status}
-            tooltip="Operating income / interest expense (>3x = healthy)"
-            trend={
-              prevPeriod
-                ? m.interestCoverage > prevPeriod.metrics.interestCoverage
-                  ? "up"
-                  : m.interestCoverage < prevPeriod.metrics.interestCoverage
-                  ? "down"
-                  : "neutral"
-                : undefined
-            }
-            trendValue={
-              prevPeriod
-                ? Math.abs(m.interestCoverage - prevPeriod.metrics.interestCoverage).toFixed(2)
-                : undefined
-            }
-            trendLabel="vs prior year"
-          />
-          <MetricCard
-            title="Return on Assets"
-            value={formatMetric(m.roa, "percent")}
-            status={metrics.roa.status}
-            tooltip="Net income / total assets (>5% = strong)"
-            trend={
-              prevPeriod
-                ? m.roa > prevPeriod.metrics.roa
-                  ? "up"
-                  : m.roa < prevPeriod.metrics.roa
-                  ? "down"
-                  : "neutral"
-                : undefined
-            }
-            trendValue={
-              prevPeriod
-                ? Math.abs((m.roa - prevPeriod.metrics.roa) * 100).toFixed(1) + "pp"
-                : undefined
-            }
-            trendLabel="vs prior year"
-          />
-          <MetricCard
-            title="Revenue Growth"
-            value={
-              m.revenueGrowth != null
-                ? formatMetric(m.revenueGrowth, "percent")
-                : "N/A"
-            }
-            status={metrics.revenueGrowth.status}
-            tooltip="Year-over-year revenue growth rate"
-            trend={metrics.revenueGrowth.trend}
-            trendValue={
-              m.revenueGrowth != null
-                ? `$${(latestPeriod.revenue / 1000).toFixed(1)}B revenue`
-                : undefined
-            }
-          />
-        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <PremiumCard className="p-5">
+            <p className="mb-3 text-sm font-semibold">Top strengths</p>
+            <SignalList
+              items={analyst.positiveSignals.slice(0, 3).map((item) => ({
+                title: item,
+                tone: "good",
+              }))}
+            />
+          </PremiumCard>
 
-        {/* Revenue trend chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue & Earnings Trend</CardTitle>
-            <CardDescription>
-              Revenue, net income, and EBITDA across fiscal periods
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrendChart periods={company.periods} />
-          </CardContent>
-        </Card>
+          <PremiumCard className="p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">Top risks</p>
+              <DetailDrawer
+                title="Risk driver detail"
+                description="Full current risk list from the deterministic mock model."
+                trigger={<button className="text-xs font-medium text-primary hover:underline">View all</button>}
+              >
+                <SignalList
+                  items={analyst.keyRisks.map((item) => ({
+                    title: item,
+                    tone: "bad",
+                  }))}
+                />
+              </DetailDrawer>
+            </div>
+            <SignalList
+              items={analyst.keyRisks.slice(0, 3).map((item) => ({
+                title: item,
+                tone: "bad",
+              }))}
+            />
+          </PremiumCard>
 
-        {/* Timeline + Recommendations: 2-col on large */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Risk Timeline */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <CardTitle>Risk Timeline</CardTitle>
-              </div>
-              <CardDescription>
-                Key events and financial developments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {company.timeline.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  No timeline events recorded.
-                </p>
-              ) : (
-                <div className="pt-1">
-                  {company.timeline.map((event) => (
-                    <TimelineItem key={event.id} event={event} />
+          <PremiumCard className="p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">Recommended next actions</p>
+              <DetailDrawer
+                title="Recommended next actions"
+                description="Review actions attached to current financial, risk, market, and news signals."
+                trigger={<button className="text-xs font-medium text-primary hover:underline">Open</button>}
+              >
+                <div className="space-y-3">
+                  {analyst.recommendedActions.map((item, index) => (
+                    <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-xs font-semibold text-muted-foreground">Action {index + 1}</p>
+                      <p className="mt-1 text-sm leading-6">{item}</p>
+                    </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recommendations */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Lightbulb className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-base font-semibold text-foreground">
-                Recommendations
-              </h3>
+              </DetailDrawer>
             </div>
-            {company.recommendations.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                  No recommendations at this time.
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {company.recommendations.map((rec) => (
-                  <RecommendationCard key={rec.id} rec={rec} />
-                ))}
-              </div>
-            )}
-          </div>
+            <SignalList
+              items={analyst.recommendedActions.slice(0, 3).map((item) => ({
+                title: item,
+                tone: "neutral",
+              }))}
+            />
+          </PremiumCard>
         </div>
       </Tabs.Content>
 
@@ -1226,6 +986,13 @@ export function CompanyTabs({
 
       {/* ── AI Analyst Tab ────────────────────────────────────────── */}
       <Tabs.Content value="analyst" className="space-y-4 outline-none">
+        <InvestmentHealthPanel
+          financialHealthScore={financialHealthScore}
+          riskScore={riskScore}
+          marketMomentumScore={marketMomentumScore}
+          newsSentimentScore={newsSentimentScore}
+          investmentHealth={investmentHealth}
+        />
         <CommandPanel
           title="Structured AI analyst memo"
           description={analyst.executiveSummary}
@@ -1251,6 +1018,74 @@ export function CompanyTabs({
         <PremiumCard className="p-4 text-xs leading-6 text-muted-foreground">
           {analyst.professionalDisclaimer}
         </PremiumCard>
+        <ExpandableSection
+          title="Model basis and methodology"
+          description="Collapsed by default to keep the analyst tab focused."
+        >
+          <div className="grid gap-2">
+            {analyst.modelBasis.map((item) => (
+              <div key={item} className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm text-muted-foreground">
+                {item}
+              </div>
+            ))}
+          </div>
+        </ExpandableSection>
+      </Tabs.Content>
+
+      {/* ── Reports Tab ───────────────────────────────────────────── */}
+      <Tabs.Content value="reports" className="space-y-4 outline-none">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <CommandPanel
+            title="Company report workflow"
+            description="Turn this company review into a mock analyst memo after checking the summary, financials, risk, market, and news tabs."
+            icon={Target}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <MetricTile label="Company" value={company.ticker} detail={company.name} tone="accent" />
+              <MetricTile label="Risk" value={`${riskScore}/100`} detail={riskLabel} tone={riskScore >= 70 ? "bad" : riskScore >= 50 ? "watch" : "good"} />
+              <MetricTile label="Investment" value={`${investmentHealth.score}/100`} detail={investmentHealth.label} tone="info" />
+              <MetricTile label="News" value={`${newsSentimentScore}/100`} detail="Sentiment context" tone="watch" />
+            </div>
+          </CommandPanel>
+
+          <PremiumCard className="p-5">
+            <p className="text-sm font-semibold">Available report previews</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Previews are mock on-screen deliverables only. Exports remain intentionally non-persistent.
+            </p>
+            <div className="mt-4 space-y-2">
+              {["Company Snapshot", "Risk Assessment Memo", "News & Market Intelligence"].map((reportTitle) => (
+                <ReportPreviewDrawer
+                  key={reportTitle}
+                  title={reportTitle}
+                  description={`${company.name} · mock report preview`}
+                  trigger={
+                    <button className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-left text-sm transition hover:border-primary/30">
+                      <span>{reportTitle}</span>
+                      <span className="text-xs text-primary">Preview</span>
+                    </button>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Executive summary</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{analyst.executiveSummary}</p>
+                    </div>
+                    <SignalList
+                      items={[
+                        ...analyst.keyRisks.slice(0, 2).map((item) => ({ title: item, tone: "bad" as const })),
+                        ...analyst.positiveSignals.slice(0, 2).map((item) => ({ title: item, tone: "good" as const })),
+                      ]}
+                    />
+                    <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-200">
+                      Mock report preview only. No PDF/DOCX export or persisted report artifact is created here.
+                    </div>
+                  </div>
+                </ReportPreviewDrawer>
+              ))}
+            </div>
+          </PremiumCard>
+        </div>
       </Tabs.Content>
     </Tabs.Root>
   );

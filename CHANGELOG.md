@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-07
+
+### Added
+
+- Added `UX_INFORMATION_ARCHITECTURE_AUDIT.md` before implementation to document route-level clutter, primary user questions, and disclosure candidates.
+- Added `PROGRESSIVE_DISCLOSURE_PLAN.md`.
+- Added `components/ui/progressive-disclosure.tsx` with `PremiumTabs`, detail/news/metric/report drawers, command modal, expandable sections, methodology popover, tooltip helper, mobile sheet alias, and section summary cards.
+- Added final progressive-disclosure screenshot evidence in `visual-audit/ia-pass-final/`.
+
+### Changed
+
+- Reworked `/dashboard` into a command-center view with tabs for Attention, Signals, Quick Actions, and Portfolio Context.
+- Shortened `/dashboard/company/[id]` overview and moved deeper AI, report, market, news, financial, risk, fraud, metric, and event content behind tabs, drawers, accordions, and methodology disclosure.
+- Reworked `/dashboard/reports` with report generation in a command modal, generated report preview drawers, and expandable chart context.
+- Reworked `/dashboard/news` into compact event rows with news event drawers.
+- Reworked `/dashboard/market` with metric drilldown drawers and accordion disclosure for top movers, momentum drivers, and data limits.
+- Reworked `/dashboard/simulator` with advanced assumptions, saved scenarios, and driver details behind accordions/drawers.
+- Reworked `/dashboard/compare` with tabbed Signals, Financials, Radar, and Risk Trend views.
+- Reworked `/dashboard/copilot` prompt library into accordion prompt groups.
+- Reworked `/dashboard/alerts` rows with detail drawers.
+- Reworked `/dashboard/upload` into a three-step Input, Validate, Review wizard.
+- Updated mobile company detail header actions and metadata to avoid clipping.
+- Updated `DESIGN_SYSTEM.md`, `FEATURE_TRACKER.md`, `ROADMAP.md`, and `RESPONSIVE_QA.md` for the progressive disclosure pass.
+
+### Validation
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed.
+- `node scripts/check-responsive-overflow.mjs http://localhost:3000` passed for all 13 audited routes at 390px, 768px, 1024px, and 1440px.
+- `node scripts/capture-visual-audit.mjs ia-pass-final http://localhost:3000` captured 52 route/breakpoint screenshots.
+
 ## 2026-07-05
 
 ### Added

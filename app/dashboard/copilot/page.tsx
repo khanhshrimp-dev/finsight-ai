@@ -33,6 +33,7 @@ import {
   MetricDeltaCard,
   SplitWorkspaceLayout,
 } from "@/components/ui/premium-dashboard";
+import { ExpandableSection } from "@/components/ui/progressive-disclosure";
 import { mockCompanies } from "@/lib/mock";
 import { companyIntelligence } from "@/lib/mock/company-intelligence";
 import { analyzeRisk } from "@/lib/risk";
@@ -840,15 +841,22 @@ export default function CopilotPage() {
                 <Sparkles className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold">Prompt library</p>
               </div>
-              <div className="space-y-4">
-                {PROMPT_GROUPS.map((group) => {
+              <div className="space-y-3">
+                {PROMPT_GROUPS.map((group, index) => {
                   const Icon = group.icon;
                   return (
-                    <div key={group.label}>
-                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        <Icon className="h-3.5 w-3.5" />
-                        {group.label}
-                      </div>
+                    <ExpandableSection
+                      key={group.label}
+                      title={
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-3.5 w-3.5" />
+                          {group.label}
+                        </span>
+                      }
+                      description={`${group.prompts.length} prompt templates`}
+                      defaultOpen={index === 0}
+                      className="rounded-xl"
+                    >
                       <div className="flex flex-wrap gap-2">
                         {group.prompts.map((prompt) => (
                           <button
@@ -861,7 +869,7 @@ export default function CopilotPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
+                    </ExpandableSection>
                   );
                 })}
               </div>

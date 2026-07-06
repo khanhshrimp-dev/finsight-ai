@@ -27,6 +27,11 @@ import {
   DemoDataNotice,
   MetricDeltaCard,
 } from "@/components/ui/premium-dashboard";
+import {
+  CommandModal,
+  ExpandableSection,
+  ReportPreviewDrawer,
+} from "@/components/ui/progressive-disclosure";
 import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
 import { RiskTrendChart } from "@/components/charts/risk-trend-chart";
 import { mockRiskTrend } from "@/lib/mock";
@@ -208,10 +213,30 @@ export default function ReportsPage() {
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
-          <Button size="sm" onClick={handleGenerate} disabled={isGenerating}>
-            <FileText className="h-4 w-4" />
-            {isGenerating ? "Generating..." : "Generate Preview"}
-          </Button>
+          <CommandModal
+            title="Generate mock report preview"
+            description="Confirm the selected company and report type. This does not create a persisted export."
+            trigger={
+              <Button size="sm" disabled={isGenerating}>
+                <FileText className="h-4 w-4" />
+                {isGenerating ? "Generating..." : "Generate Preview"}
+              </Button>
+            }
+            footer={
+              <Button className="w-full" onClick={handleGenerate} disabled={isGenerating}>
+                <FileText className="h-4 w-4" />
+                {isGenerating ? "Generating preview..." : "Generate mock preview"}
+              </Button>
+            }
+          >
+            <div className="space-y-3">
+              <MetricDeltaCard label="Company" value={selectedCompany.company.ticker} detail={selectedCompany.company.name} tone="accent" />
+              <MetricDeltaCard label="Report type" value={selectedTemplate.title} detail={selectedTemplate.estimatedOutput} tone="info" />
+              <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-200">
+                Mock workflow only. PDF/DOCX generation and persistence remain future work.
+              </div>
+            </div>
+          </CommandModal>
           </>
         }
       />
@@ -294,10 +319,27 @@ export default function ReportsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full gap-2" onClick={handleGenerate} disabled={isGenerating}>
-                <FileText className="h-4 w-4" />
-                {isGenerating ? "Generating preview..." : "Generate mock preview"}
-              </Button>
+              <CommandModal
+                title="Generate mock report preview"
+                description="Review selected inputs before updating the on-screen preview state."
+                trigger={
+                  <Button className="w-full gap-2" disabled={isGenerating}>
+                    <FileText className="h-4 w-4" />
+                    {isGenerating ? "Generating preview..." : "Generate mock preview"}
+                  </Button>
+                }
+                footer={
+                  <Button className="w-full gap-2" onClick={handleGenerate} disabled={isGenerating}>
+                    <FileText className="h-4 w-4" />
+                    {isGenerating ? "Generating preview..." : "Generate mock preview"}
+                  </Button>
+                }
+              >
+                <div className="space-y-3">
+                  <MetricDeltaCard label="Company" value={selectedCompany.company.ticker} detail={selectedCompany.company.name} tone="accent" />
+                  <MetricDeltaCard label="Report type" value={selectedTemplate.title} detail={selectedTemplate.bestUseCase} tone="info" />
+                </div>
+              </CommandModal>
             </div>
           </PremiumPanel>
 
@@ -448,28 +490,33 @@ export default function ReportsPage() {
             disclaimer="Mock export buttons do not create real PDFs or DOCX files."
           />
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Portfolio Risk Trend</CardTitle>
-                <CardDescription>Shared mock trend included in portfolio reports.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[220px]">
-                  <RiskTrendChart data={mockRiskTrend} />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Distribution</CardTitle>
-                <CardDescription>Current eight-company mock universe.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RiskDistributionChart data={portfolioIntelligenceStats.riskDistribution} />
-              </CardContent>
-            </Card>
-          </div>
+          <ExpandableSection
+            title="Portfolio charts included in reports"
+            description="Collapsed so the report workflow stays focused on template, preview, and history."
+          >
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Portfolio Risk Trend</CardTitle>
+                  <CardDescription>Shared mock trend included in portfolio reports.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[220px]">
+                    <RiskTrendChart data={mockRiskTrend} />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Risk Distribution</CardTitle>
+                  <CardDescription>Current eight-company mock universe.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RiskDistributionChart data={portfolioIntelligenceStats.riskDistribution} />
+                </CardContent>
+              </Card>
+            </div>
+          </ExpandableSection>
         </div>
       </div>
 
@@ -480,29 +527,49 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {filteredReports.map((report) => (
-            <div key={report.id} className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold">{report.title}</p>
-                  <Badge variant="outline">{report.template?.title ?? report.type}</Badge>
-                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{report.status}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {report.company?.name ?? "Company"} · {report.pages} pages · {formatDate(report.createdAt)}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Link href={`/dashboard/company/${report.companyId}`}>
-                  <Button variant="outline" size="sm">
-                    View Company
+            <ReportPreviewDrawer
+              key={report.id}
+              title={report.title}
+              description={`${report.company?.name ?? "Company"} · ${report.pages} pages · ${formatDate(report.createdAt)}`}
+              trigger={
+                <button className="flex w-full flex-col gap-3 rounded-lg border p-4 text-left transition hover:border-primary/30 md:flex-row md:items-center md:justify-between">
+                  <span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold">{report.title}</span>
+                      <Badge variant="outline">{report.template?.title ?? report.type}</Badge>
+                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{report.status}</Badge>
+                    </span>
+                    <span className="mt-1 block text-sm text-muted-foreground">
+                      {report.company?.name ?? "Company"} · {report.pages} pages · {formatDate(report.createdAt)}
+                    </span>
+                  </span>
+                  <span className="text-sm font-medium text-primary">Open preview</span>
+                </button>
+              }
+              footer={
+                <div className="flex gap-2">
+                  <Link href={`/dashboard/company/${report.companyId}`} className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      View Company
+                    </Button>
+                  </Link>
+                  <Button variant="outline" className="flex-1">
+                    <Download className="h-4 w-4" />
+                    Mock JSON
                   </Button>
-                </Link>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4" />
-                  Mock JSON
-                </Button>
+                </div>
+              }
+            >
+              <div className="space-y-4">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  This drawer previews report metadata without expanding every historical report on the page.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <MetricDeltaCard label="Report type" value={report.template?.title ?? report.type} detail="Mock report format" tone="accent" />
+                  <MetricDeltaCard label="Pages" value={String(report.pages)} detail={report.status} tone="info" />
+                </div>
               </div>
-            </div>
+            </ReportPreviewDrawer>
           ))}
         </CardContent>
       </Card>

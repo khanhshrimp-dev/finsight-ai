@@ -28,6 +28,7 @@ import {
   MetricDeltaCard,
 } from "@/components/ui/premium-dashboard";
 import { PremiumPanel } from "@/components/ui/premium-panel";
+import { DetailDrawer } from "@/components/ui/progressive-disclosure";
 import { allAlerts, mockCompanies } from "@/lib/mock";
 import { computeMockRiskScore, getRiskTierFromScore, getRiskLabel } from "@/lib/utils/risk";
 import { cn } from "@/lib/utils";
@@ -964,34 +965,89 @@ function AlertCard({ alert, onToggleRead }: AlertCardProps) {
                 </span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <p className="line-clamp-1 text-xs text-muted-foreground mt-1 leading-relaxed">
               {alert.description}
             </p>
             <div className="flex items-center justify-between gap-2 mt-2">
               <span className="text-[11px] text-muted-foreground">
                 {formatAlertDate(alert.date)}
               </span>
-              <button
-                onClick={() => onToggleRead(alert.id)}
-                className={cn(
-                  "text-[11px] font-medium transition-colors flex items-center gap-1",
-                  alert.read
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-primary hover:text-primary/80"
-                )}
-              >
-                {alert.read ? (
-                  <>
-                    <RefreshCw className="h-3 w-3" />
-                    Mark unread
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-3 w-3" />
-                    Mark as read
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-3">
+                <DetailDrawer
+                  title={alert.title}
+                  description={`${alert.companyName} · ${formatAlertDate(alert.date)}`}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                      Details
+                    </Button>
+                  }
+                  footer={
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <Link
+                        href={`/dashboard/company/${alert.companyId}`}
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        Open company profile
+                      </Link>
+                      <Button size="sm" variant="outline" onClick={() => onToggleRead(alert.id)}>
+                        {alert.read ? "Mark unread" : "Mark as read"}
+                      </Button>
+                    </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", getAlertTypeBadgeClass(alert.type))}>
+                        {getAlertTypeLabel(alert.type)}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+                        {alert.severity}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
+                        {alert.read ? "Read" : "Unread"}
+                      </span>
+                    </div>
+                    <div className="rounded-xl border bg-muted/30 p-4">
+                      <p className="text-sm leading-6 text-muted-foreground">{alert.description}</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <MetricDeltaCard
+                        label="Company"
+                        value={alert.companyName}
+                        detail="Alert subject"
+                        tone="info"
+                      />
+                      <MetricDeltaCard
+                        label="Event type"
+                        value={getAlertTypeLabel(alert.type)}
+                        detail="Mock monitoring rule"
+                        tone={alert.severity === "critical" ? "bad" : alert.severity === "warning" ? "watch" : "default"}
+                      />
+                    </div>
+                  </div>
+                </DetailDrawer>
+                <button
+                  onClick={() => onToggleRead(alert.id)}
+                  className={cn(
+                    "text-[11px] font-medium transition-colors flex items-center gap-1",
+                    alert.read
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-primary hover:text-primary/80"
+                  )}
+                >
+                  {alert.read ? (
+                    <>
+                      <RefreshCw className="h-3 w-3" />
+                      Mark unread
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-3 w-3" />
+                      Mark as read
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

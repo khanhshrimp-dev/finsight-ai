@@ -157,20 +157,20 @@ export default async function CompanyPage({
         icon={Building2}
         actions={
           <>
-            <Link href={`/dashboard/copilot?company=${company.id}`}>
-              <Button variant="default" size="sm" className="gap-1.5">
+            <Link href={`/dashboard/copilot?company=${company.id}`} className="w-full sm:w-auto">
+              <Button variant="default" size="sm" className="w-full gap-1.5 sm:w-auto">
                 <Bot className="h-4 w-4" />
                 Ask Copilot
               </Button>
             </Link>
-            <Link href="/dashboard/simulator">
-              <Button variant="outline" size="sm" className="gap-1.5">
+            <Link href="/dashboard/simulator" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
                 <SlidersHorizontal className="h-4 w-4" />
                 Open Simulator
               </Button>
             </Link>
-            <Link href="/dashboard/reports">
-              <Button variant="outline" size="sm" className="gap-1.5">
+            <Link href="/dashboard/reports" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
                 <FileText className="h-4 w-4" />
                 Generate Report
               </Button>
@@ -207,7 +207,7 @@ export default async function CompanyPage({
                 {company.confidenceScore}% confidence
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+            <div className="grid gap-1.5 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:items-center sm:gap-x-4">
               <span className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 {company.headquarters}

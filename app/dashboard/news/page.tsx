@@ -24,6 +24,7 @@ import {
   DemoDataNotice,
   FilterToolbar,
 } from "@/components/ui/premium-dashboard";
+import { NewsEventDrawer } from "@/components/ui/progressive-disclosure";
 import {
   companyIntelligence,
   newsIntelligenceUniverse,
@@ -250,55 +251,69 @@ export default function NewsDashboardPage() {
                 description="Adjust the search, sentiment, severity, or event filter to return to the mock event feed."
               />
             ) : filtered.map((item) => (
-              <article key={item.id} className="p-4 hover:bg-muted/30">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <Badge className={sentimentClass(item.sentiment)}>{item.sentiment}</Badge>
-                      <Badge className={severityClass(item.severity)}>{item.severity}</Badge>
-                      <Badge variant="outline">{item.eventType.replaceAll("_", " ")}</Badge>
+              <NewsEventDrawer
+                key={item.id}
+                title={item.title}
+                description={`${item.source} · ${formatDate(item.publishedAt)}`}
+                trigger={
+                  <button className="block w-full p-4 text-left transition hover:bg-muted/30">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <Badge className={sentimentClass(item.sentiment)}>{item.sentiment}</Badge>
+                          <Badge className={severityClass(item.severity)}>{item.severity}</Badge>
+                          <Badge variant="outline">{item.eventType.replaceAll("_", " ")}</Badge>
+                        </div>
+                        <h2 className="text-base font-semibold leading-snug">{item.title}</h2>
+                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {item.companyName}
+                          </span>
+                          <span className="font-mono">{item.ticker}</span>
+                          <span>{item.source}</span>
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            {formatDate(item.publishedAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border bg-card p-3 text-sm md:min-w-[140px]">
+                        <p className="text-xs text-muted-foreground">News score</p>
+                        <p className={cn("text-2xl font-bold tabular-nums", scoreColor(item.companyScore))}>
+                          {item.companyScore}
+                        </p>
+                      </div>
                     </div>
-                    <h2 className="text-base font-semibold leading-snug">{item.title}</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                      <div className="rounded-lg border bg-background/70 p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Relevance</p>
-                        <p className="font-mono text-sm font-semibold">{item.relevanceScore}/100</p>
-                      </div>
-                      <div className="rounded-lg border bg-background/70 p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk impact</p>
-                        <p className="text-sm font-semibold capitalize">{item.riskImpact}</p>
-                      </div>
-                      <div className="rounded-lg border bg-background/70 p-2">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Confidence</p>
-                        <p className="font-mono text-sm font-semibold">{item.confidenceScore}/100</p>
-                      </div>
+                  </button>
+                }
+              >
+                <div className="space-y-4">
+                  <p className="text-sm leading-6 text-muted-foreground">{item.summary}</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Relevance</p>
+                      <p className="mt-2 font-mono text-2xl font-semibold">{item.relevanceScore}/100</p>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      <Link
-                        href={`/dashboard/company/${item.companyId}`}
-                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        <Building2 className="h-3.5 w-3.5" />
-                        {item.companyName}
-                      </Link>
-                      <span className="font-mono">{item.ticker}</span>
-                      <span>{item.source}</span>
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {formatDate(item.publishedAt)}
-                      </span>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Confidence</p>
+                      <p className="mt-2 font-mono text-2xl font-semibold">{item.confidenceScore}/100</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk impact</p>
+                      <p className="mt-2 text-lg font-semibold capitalize">{item.riskImpact}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Company score</p>
+                      <p className={cn("mt-2 font-mono text-2xl font-semibold", scoreColor(item.companyScore))}>{item.companyScore}/100</p>
                     </div>
                   </div>
-                  <div className="min-w-[140px] rounded-lg border bg-card p-3 text-sm">
-                    <p className="text-xs text-muted-foreground">Company news score</p>
-                    <p className={cn("text-2xl font-bold tabular-nums", scoreColor(item.companyScore))}>
-                      {item.companyScore}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{item.companyLabel}</p>
-                  </div>
+                  <Link href={`/dashboard/company/${item.companyId}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                    Open company <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-              </article>
+              </NewsEventDrawer>
             ))}
           </CardContent>
         </Card>

@@ -83,9 +83,12 @@ Completed items:
 - Added premium dashboard primitives for demo notices, metric deltas, analyst memos, filter shells, command cards, and split workspaces.
 - Completed premium pass-two redesign for Copilot, Reports, Simulator, Compare, Market, News, Alerts, Upload, and Settings.
 - Added `VISUAL_QA_CHECKLIST.md` for route and viewport review coverage until automated screenshot regression exists.
+- Added `UX_INFORMATION_ARCHITECTURE_AUDIT.md` before implementation and completed a progressive disclosure pass across dashboard overview, company detail, reports, news, market, simulator, compare, copilot, alerts, upload, and settings.
+- Added `components/ui/progressive-disclosure.tsx` with shared tabs, drawers, modals, accordions, popovers, tooltips, and summary-card primitives.
+- Added `PROGRESSIVE_DISCLOSURE_PLAN.md` and refreshed `RESPONSIVE_QA.md` with 52 route/breakpoint checks and screenshot evidence in `visual-audit/ia-pass-final/`.
 
 Remaining items:
-- Add automated visual regression coverage when a browser runner is available.
+- Add automated visual regression coverage in CI.
 - Continue targeted accessibility review with broader browser-assisted checks across secondary routes.
 - Remove dead references as product behavior changes.
 

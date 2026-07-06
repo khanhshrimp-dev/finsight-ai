@@ -92,6 +92,23 @@ Premium dashboard components should cover:
 - `FilterToolbar` for responsive intelligence filters with result counts.
 - `SplitWorkspaceLayout` for analyst workspaces such as Copilot.
 
+Progressive disclosure components should cover:
+
+- `PremiumTabs` for primary route modes and workbench sections.
+- `DetailDrawer`, `InsightDrawer`, `MetricDrilldownDrawer`, `NewsEventDrawer`, `ReportPreviewDrawer`, and `MobileFilterSheet` for drill-down content that should not lengthen the page.
+- `CommandModal` for focused mock commands that need confirmation or parameter review.
+- `ExpandableSection` for secondary methodology, saved scenarios, advanced assumptions, provider limitations, and history.
+- `MethodologyPopover` and `TooltipInfo` for short definitions and scoring notes.
+- `SectionSummaryCard` for compact cross-route summaries and quick actions.
+
+Progressive disclosure rules:
+
+- Keep the first visible route state focused on the main user question.
+- Prefer tabs for peer-level modes, drawers for item detail, modals for commands, accordions for optional context, and popovers/tooltips for definitions.
+- Do not hide the only path to a critical action; keep the primary next action visible.
+- On mobile, detail surfaces must be click/tap based and should not depend on hover.
+- Wide tables are acceptable only inside contained horizontal scroll regions.
+
 Implemented premium page patterns:
 
 - Landing hero plus dashboard CTA cluster.
@@ -109,6 +126,7 @@ Implemented premium page patterns:
 - Alerts page with category tabs, command metrics, and rule/watchlist framing.
 - Upload page with mock intake, parser preview, and validation guidance.
 - Settings page with coverage cards, provider placeholders, and disabled unavailable controls.
+- Progressive disclosure IA pass across dashboard overview, company detail, reports, news, market, simulator, compare, copilot, alerts, upload, and settings.
 
 ## Button System
 
